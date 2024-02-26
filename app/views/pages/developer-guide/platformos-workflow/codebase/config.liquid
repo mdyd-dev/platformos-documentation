@@ -21,7 +21,8 @@ metadata:
 |websockets_require_csrf_token                                   |true|If disabled, the websocket connection will not check the CSRF token. By keeping this flag as `true`, connections to websocket will require CSRF token to be included in the parameters, increasing the security of your application.
 |maintenance                                   |{ enabled: false, password_constant: 'MAINTENANCE_PASSWORD', partial: 'maintenance' }|Allows to setup mandatory password protection, useful when the site should be restricted only to users who know the password.
 |modules_that_allow_delete_on_deploy                             |[]|Allows to list module names, for which if a file will be missing on deploy, it will be removed. The default behaviour of module is to not delete any files, because it is possible that developer would know download all of the source code and would like to just deploy an overwrite for a few chosen files. If the module is listed and sync is enabled, then users will be also able to remove the files from the instance by removing them in their filesystem.
-
+|translation_keys_to_ignore                             |[]|Allows to list translation keys which will not be updated/delete on sync/deploy. It is most useful if you would like to change translations using UI and will not reflect it in your codebase. Translations will still be created if not defined.
+|sync_translations                             |false|If enabled, translations will be synchronized on each sync/deploy similarly to other resources, meaning if you remove a translation form a translation file and sync it, it will disappear from the Instance. It will also remove all translations from the deleted file. The default behaviour (for backwards compatibility) is that translations will not be deleted; in order to delete a translation one needs to explicitly call `admin_translation_unset` GraphQL mutation. This setting is compatible with `modules_that_allow_delete_on_deploy`.
 
 
 Example `app/config.yml` file with recommended values:
@@ -37,6 +38,7 @@ safe_translate: true
 skip_elasticsearch: true
 slug_exact_match: true
 websockets_require_csrf_token: true
+sync_translations: true
 ---
 ```
 
