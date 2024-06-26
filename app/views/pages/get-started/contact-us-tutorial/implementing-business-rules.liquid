@@ -1,0 +1,339 @@
+---
+metadata:
+  title: Implementing Business Rules Using Commands
+  description: Follow these step-by-step tutorials to build a Contact Us form on platformOS
+converter: markdown
+---
+
+As the next step, we will implement business rules to ensure the form submission meets specific criteria, using the Command approach described in the [core module's documentation](https://github.com/Platform-OS/pos-module-core?tab=readme-ov-file#commands--business-logic). 
+
+Specifically, we want to:
+
+* Validate that the email provided by the user looks like a valid email.
+* Ensure that the body is at least 10 characters long and has no more than 200 characters.
+
+## Create the folder structure
+
+First, create the following directories and files:
+
+<pre class="command-line" data-user="user" data-host="host"><code class="language-bash">
+mkdir -p app/lib/commands/contacts/create
+</code></pre>
+
+1. In the `app` directory, create a `lib` directory.
+
+2. Within the `lib` directory, create a commands directory.
+
+3. Inside the commands directory, create a `contacts` directory.
+
+4. Within the `contacts` directory, create a file named `create.liquid`.
+
+5. In the `contacts` directory, create another directory named `create`.
+
+6. Inside the `create` directory, create the following files:
+
+<pre class="command-line" data-user="user" data-host="host"><code class="language-bash">
+build.liquid
+check.liquid
+</code></pre>
+
+Your folder structure should look like this:
+
+<pre class="command-line" data-user="user" data-host="host"><code class="language-bash">
+  app
+  └── lib
+      └── commands
+          └── contacts
+              ├── create.liquid
+              └── create
+                  ├── build.liquid
+                  └── check.liquid
+  </code></pre>
+
+
+### Using the `function` tag 
+
+To create a functional _Contact Us_ form in platformOS, you’ll use the `function` tag. The `function` tag works similarly to functions in traditional programming languages. It allows you to call a partial and store the returned result in a variable, which is essential for processing form data like user contacts.
+
+First, you'll need to use the `function` tag and specify a variable name to store the result. Here’s the basic syntax:
+
+{% raw %}
+```liquid
+{% function variable_name = 'path/to/my/partial', argument: value %}
+```
+{% endraw %}
+
+Let’s add a `function` tag to your `app/views/pages/contacts/create.liquid` file:
+
+#### app/views/pages/contacts/create.liquid
+
+{% raw %}
+```liquid
+---
+method: post
+---
+{% function contact %}
+```
+{% endraw %}
+
+In our example, `contact` is the variable that will store the result of the function.
+
+To use it, you need to make sure that the partial returns data using the `return` tag. If you're using an editor that supports LSP, you can explore examples and get more details about the function tag there.
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/function_lsp_help.png' | asset_url }}" alt="LSP support for function tag">
+
+If you previously added `Hello {% raw %}{{ context.params.contact }}{% endraw %}` for demonstration purposes, you can now remove it from the app/views/pages/contacts/create.liquid file. It was just a placeholder to illustrate passing data.
+
+## Specify the path to the partial 
+
+You can see that LSP complains about invalid syntax for the `function` tag, and shows you what’s missing:
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/function_tag_lsp.png' | asset_url }}" alt="LSP error for function tag">
+
+{% raw %}
+```liquid
+{% function variable_name = 'path/to/my/partial', argument: value %}
+```
+{% endraw %}
+
+To use a `function` tag, you need to specify the path to the partial file that contains the code you want to execute. The next step is to provide this path. You can use LSP to autocomplete the path, so you don’t need to type it manually. In our example, the path leads to the `app/lib/commands/contacts/create`.liquid` file:
+
+#### app/views/pages/contacts/create.liquid
+
+`{% raw %}
+```liquid
+---
+method: post
+---
+
+{% function contact = 'commands/contacts/create' %}
+```
+{% endraw %}
+
+Inside the `app/views/pages/contacts/create.liquid` file, we have Liquid code that uses the `function` tag. This tag evaluates the code from `app/lib/commands/contacts/create.liquid`. This is how you invoke the function.
+
+## Provide arguments to the function
+
+To make our _Contact Us_ form work, we want to provide arguments to this function:
+
+#### app/views/pages/contacts/create.liquid
+
+{% raw %}
+```liquid
+---
+method: post
+---
+
+{% function contact = 'commands/contacts/create', object: context.params.contact %}
+```
+{% endraw %}
+
+Here, we pass `context.params.contact` as the `object` argument. This object contains the `email` and `body` parameters that you will use in the partial. You can choose any name for the function. By default, the partial won't have access to any data unless specified.
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/lsp_contact_never_used.png' | asset_url }}" alt="LSP feedback indicating unused 'contact' variable">
+
+You might notice that LSP complains that the `contact` variable is never used and we have an unused `object` argument. This is true for now, and we will address it in later steps.
+
+## Using the Build Command
+
+As the next step, we want to use a build command in the `app/lib/commands/contacts/create/build.liquid` file.
+
+The build command is an essential part of the data processing workflow. It allows you to normalize and prepare data before it is stored or used further in your application. By defining a build command, you can manipulate incoming data, perform validations, and ensure the data meets your application's requirements. This is especially useful for tasks like cleaning up user input, setting default values, and enforcing data consistency.
+
+Build commands are defined in Liquid templates and typically involve transforming and returning JSON objects. This process ensures that your data is well-structured and ready for subsequent operations or storage.
+
+## Set up a Build Command
+
+To set up a build command, you don’t need to write the code from scratch. Let’s use the dummy build command from the [core module documentation](https://github.com/Platform-OS/pos-module-core?tab=readme-ov-file#build).
+
+Here's the dummy build command from the core module documentation:
+
+{% raw %}
+```liquid
+{% parse_json data %}
+  {
+    "title": {{ object.title | downcase | json }},
+    "uuid": {{ object.uuid | json }},
+    "c__score": 0
+  }
+{% endparse_json %}
+
+{% liquid
+  if data['uuid'] == blank
+    hash_assign data["uuid"] = '' | uuid | json
+  endif
+
+  return data
+%}
+```
+{% endraw %}
+
+Copy this code into your `app/lib/commands/contacts/create/build.liquid` file.
+
+## Customize the Build Command
+
+Now, we will modify the build command to suit our needs. In the build phase, you normalize the parameters, ensuring you only take what's relevant and perform any necessary transformations. The goal is to clean up and prepare the contact data (email and body) before further processing.
+
+For example, you want to ensure that the email is always in lowercase:
+
+#### app/lib/commands/contacts/create/build.liquid
+
+{% raw %}
+```liquid
+{% parse_json contact %}
+  {
+    "email": {{ object.email | downcase | json }},
+    "body": {{ object.body | json }}
+  }
+{% endparse_json %}
+
+{% liquid
+  return contact
+%}
+```
+{% endraw %}
+
+The `parse_json contact` tag parses the JSON object (email and body) into a variable named `contact`.
+
+Inside the JSON object, we transform `object.email` to lowercase and ensure it is properly formatted as JSON.
+
+Every function needs to `return` an object. In this case, the function takes user parameters, processes them (downcasing the email), and returns an object with the email and body properties.
+
+For the body, we don’t need to do anything.
+
+## Invoking the function
+
+To process the contact data using the build command, we need to invoke the function inside the `/app/lib/commands/contacts/create.liquid` file:
+
+Here's the code snippet for invoking the function:
+
+#### app/lib/commands/contacts/create.liquid
+
+{% raw %}
+```liquid
+{% function contact = 'commands/contacts/create/build', object: object %}
+```
+{% endraw %}
+
+This line of code will call the build command, passing the `object` containing the `email` and `body` parameters to it. The build command will then process these parameters and return a normalized `contact` object.
+
+We used the `function` tag to specify the path to the build command partial. Remember, you can use LSP to autocomplete paths, so you don’t need to type them manually. In our example, the path leads to the `app/lib/commands/contacts/create/build.liquid` file.
+
+You also need to pass the `object` that you defined earlier in your `/app/views/pages/contacts/create.liquid` file, which is `object`.
+
+You might notice that LSP complains that the `contact` variable is never used. This is true for now, and we will address it in later steps.
+
+### Using the `log` tag for debugging
+
+The `log` tag is a basic and effective way to debug your platformOS application. Here's how to use it in your `app/lib/commands/contacts/create.liquid` file:
+
+#### app/lib/commands/contacts/create.liquid
+
+{% raw %}
+```liquid
+{% function contact = 'commands/contacts/create/build', object: object %}
+{% log contact, type: 'result of invoking build' %}
+
+{% return contact %}
+```
+{% endraw %}
+
+`contact`: this is the variable containing the processed object. It includes the `email` and `body` parameters, with `email` being downcased.
+
+`type: 'result of invoking build'`: this provides a label for the log entry, making it easier to identify in the logs.
+
+## Accessing logs
+
+To view your logs, you need to use the pos-cli GUI.
+
+To start the GUI, in your command line, run:
+
+<pre class="command-line" data-user="user" data-host="host"><code class="language-bash">
+pos-cli gui serve --sync staging
+</code></pre>
+
+{% include 'alert/note', content: 'Replace `staging` with the environment name you want to develop on. To list all available environments use `pos-cli env list`. Refer to the [platformOS documentation](/developer-guide/pos-cli/manage-database-using-pos-cli-gui.liquid#starting-the-gui) for detailed instructions on starting the GUI.' %}
+
+**Note**
+Replace `staging` with the environment name you want to develop on. To list all available environments use `pos-cli env list`.
+Refer to the [platformOS documentation](/developer-guide/pos-cli/manage-database-using-pos-cli-gui.liquid#starting-the-gui) for detailed instructions on starting the GUI.
+
+After starting the GUI, you will see output similar to:
+
+<pre class="command-line" data-user="user" data-host="host"><code class="language-bash">
+  [07:23:19] Connected to https://contactus.staging.oregon.platform-os.com/
+  [07:23:19] Admin: http://localhost:3333
+  [07:23:19] ---
+  [07:23:19] GraphiQL IDE: http://localhost:3333/gui/graphql
+  [07:23:19] Liquid evaluator: http://localhost:3333/gui/liquid
+  [07:23:19] Instance Logs: http://localhost:3333/logs
+  [07:23:20] [Sync] Synchronizing changes to: https://contactus.staging.oregon.platform-os.com/
+  </code></pre>
+
+Open your browser and go to [http://localhost:3333/logs](http://localhost:3333/logs) to view the logs:
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/localhost_logs.png' | asset_url }}" alt="Viewing logs in the local server">
+
+Alternatively, you can use the CLI to render the logs by running the following command:
+
+<pre class="command-line" data-user="user" data-host="host"><code class="language-bash">
+pos-cli logs staging
+</code></pre>
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/logs_cli.png' | asset_url }}" alt="CLI command to view logs">
+
+## Example of introducing a syntax error
+
+Using the `log` tag effectively helps in diagnosing problems and ensuring your application runs smoothly.
+If you encounter a syntax error, such as an unnecessary comma, you can debug it by viewing the logs.
+For testing purposes, let's add an extra comma after `"body"` in the `app/lib/commands/contacts/create/build.liquid` file:
+
+#### app/lib/commands/contacts/create/build.liquid
+
+{% raw %}
+```liquid
+{% parse_json contact %}
+  {
+    "email": {{ object.email | downcase | json }},
+    "body": {{ object.body | json }},
+  }
+{% endparse_json %}
+
+{% liquid
+  return contact
+%}
+```
+{% endraw %}
+
+Now, with this unnecessary comma added, submit the form with test data.
+
+When you introduce an error like this and then access the logs at http://localhost:3333/logs, you will see a Liquid error indicating the issue. This helps you identify and correct syntax errors.
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/log_liquid_error.png' | asset_url }}" alt="Liquid error log example">
+
+Now, remove the extra comma and continue our task.
+
+#### app/lib/commands/contacts/create/build.liquid
+
+{% raw %}
+```liquid
+{% parse_json contact %}
+  {
+    "email": {{ object.email | downcase | json }},
+    "body": {{ object.body | json }}
+  }
+{% endparse_json %}
+
+{% liquid
+  return contact
+%}
+```
+{% endraw %}
+
+{% render 'alert/next', content: 'Displaying Data', url: '/get-started/contact-us-tutorial/displaying-data' %}

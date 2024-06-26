@@ -29,7 +29,7 @@
 </li>
 
 <li class="{% if cp == '/get-started/build-your-first-app/' %}active{% endif %}">
-  <a href="/get-started/build-your-first-app/">Introduction</a>
+  <a href="/get-started/build-your-first-app/">Introduction & Quick Start Guide</a>
 </li>
 
 <li class="{% if cp contains '/build-your-first-app/building-the-user-interface' %}active{% endif %}">
@@ -95,3 +95,171 @@
     {% include "shared/nav/link", href: "/get-started/build-your-first-app/user-authentication#signing-in-the-user", text: "Signing in the User" %}
   </ul>
 </li>
+
+<li class="mt-6 mb-2 text-base topic-group">
+  <h3 class="text-base uppercase">Build a Contact Us form </h3>
+</li>
+
+<li class="{% if cp == '/get-started/contact-us-tutorial/' %}active{% endif %}">
+  <a href="/get-started/contact-us-tutorial/">Introduction</a>
+</li>
+
+<li class="{% if cp contains '/contact-us-tutorial/building-the-ui' %}active{% endif %}">
+  <a href="/get-started/contact-us-tutorial/building-the-ui">Building the User Interface</a>
+
+  <ul class="submenu">
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/building-the-ui#create-a-directory-for-pages", text: "Create a directory for pages" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/building-the-ui#create-a-home-page-file", text: "Create a home page file" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/building-the-uie#using-slug-vs-path-to-the-file", text: "Using slug vs path to the file" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/building-the-ui#deploy-and-check", text: "Deploy and check" %}
+  </ul>
+
+</li>
+
+<li class="{% if cp contains '/contact-us-tutorial/setting-up-form-submission' %}active{% endif %}">
+  <a href="/get-started/contact-us-tutorial/setting-up-form-submission">Setting Up Form Submission</a>
+  <ul class="submenu">
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/setting-up-form-submission#modify-the-form-action", text: "Modify the form action" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/setting-up-form-submission#add-missing-authenticity-token", text: "Add missing authenticity token" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/setting-up-form-submission#test-the-form-submission", text: "Test the form submission" %}
+  </ul>
+</li>
+
+<li class="{% if cp contains '/contact-us-tutorial/setting-up-endpoint' %}active{% endif %}">
+  <a href="/get-started/contact-us-tutorial/setting-up-endpoint">Setting Up an Endpoint</a>
+  <ul class="submenu">
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/setting-up-endpoint#create-the-contacts-directory", text: "Create the contacts directory" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/setting-up-endpoint#create-the-create-liquid-file", text: "Create the create.liquid file" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/setting-up-endpoint#test-the-endpoint", text: "Test the endpoint" %}
+  </ul>
+</li>
+
+<li class="{% if cp contains '/contact-us-tutorial/understanding-context-params' %}active{% endif %}">
+  <a href="/get-started/contact-us-tutorial/understanding-context-params">Understanding and Using Context</a>
+  <ul class="submenu">
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/understanding-context-params#understanding-context", text: "Understanding context" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/understanding-context-params#understanding-context-params", text: "Understanding context.params" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/understanding-context-params#adding-parameters-to-your-template", text: "Adding parameters to your template" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/understanding-context-params#example-url-with-parameters", text: "Example URL with parameters" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/understanding-context-params#providing-multiple-parameters", text: "Providing multiple parameters" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/understanding-context-params#using-arrays-and-hashes", text: "Using arrays and hashes" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/understanding-context-params#filtering-specific-parameters", text: "Filtering specific parameters" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/understanding-context-params#clean-up-your-code", text: "Clean up your code" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/understanding-context-params#using-context-params-in-the-create-liquid-file", text: "Using context.params in the create.liquid file" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/understanding-context-params#add-context-params-to-create-liquid-file", text: "Add context.params to the create.liquid file" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/understanding-context-params#filter-contact-information", text: "Filter contact information" %}
+  </ul>
+</li>
+
+<li class="{% if cp contains '/contact-us-tutorial/implementing-business-rules' %}active{% endif %}">
+  <a href="/get-started/contact-us-tutorial/implementing-business-rules">Implementing Business Rules Using Commands</a>
+  <ul class="submenu">
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/implementing-business-rules#create-the-folder-structure", text: "Create the folder structure" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/implementing-business-rules#using-the-function-tag", text: "Using the function tag" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/implementing-business-rules#specify-the-path-to-the-partial", text: "Specify the path to the partial" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/implementing-business-rules#provide-arguments-to-the-function", text: "Provide arguments to the function" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/implementing-business-rules#using-the-build-command", text: "Using the Build Command" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/implementing-business-rules#set-up-a-build-command", text: "Set up a Build Command" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/implementing-business-rules#customize-the-build-command", text: "Customize the Build Command" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/implementing-business-rules#invoking-the-function", text: "Invoking the function" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/implementing-business-rules#using-the-log-tag-for-debugging", text: "Using the log tag for debugging" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/implementing-business-rules#accessing-logs", text: "Accessing logs" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/implementing-business-rules#example-of-introducing-a-syntax-error", text: "Example of introducing a syntax error" %}
+  </ul>
+</li>
+
+<li class="{% if cp contains '/contact-us-tutorial/displaying-data' %}active{% endif %}">
+  <a href="/get-started/contact-us-tutorial/displaying-data">Displaying Data</a>
+  <ul class="submenu">
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/displaying-data#invoke-the-check-command", text: "Invoke the Check Command" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/displaying-data#create-the-check-command", text: "Create the Check Command" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/displaying-data#conditional-logging", text: "Conditional Logging" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/displaying-data#debugging-with-logs", text: "Debugging with Logs" %}
+  </ul>
+</li>
+
+<li class="{% if cp contains '/contact-us-tutorial/using-validators' %}active{% endif %}">
+  <a href="/get-started/contact-us-tutorial/using-validators">Using Message Length and Email Validators</a>
+  <ul class="submenu">
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/using-validators#core-module-validators", text: "Core Module Validators" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/using-validators#set-up-length-validation", text: "Set up Length Validation" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/using-validators#modify-for-our-use-case", text: "Modify for Our Use Case" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/using-validators#add-allow-blank-argument", text: "Add Allow Blank Argument" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/using-validators#set-up-email-validation", text: "Set Up Email Validation" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/using-validators#using-c-c-variable", text: "Using c: c Variable" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/using-validators#test-email-validation", text: "Test Email Validation" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/using-validators#test-using-invalid-data", text: "Test Using Invalid Data" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/using-validators#test-using-valid-data", text: "Test Using Valid Data" %}
+  </ul>
+</li>
+
+<li class="{% if cp contains '/contact-us-tutorial/handling-invalid-input' %}active{% endif %}">
+  <a href="/get-started/contact-us-tutorial/handling-invalid-input">Handling Invalid Input</a>
+  <ul class="submenu">
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/handling-invalid-input#render-the-form-again-directly", text: "Render the Form Again Directly" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/handling-invalid-input#test-the-re-rendering", text: "Test the Re-rendering" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/handling-invalid-input#display-error-messages", text: "Display Error Messages" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/handling-invalid-input#test-error-messages", text: "Test Error Messages" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/handling-invalid-input#prefill-the-form", text: "Prefill the Form" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/handling-invalid-input#test-prefill-with-submitted-data", text: "Test Prefill with Submitted Data" %}
+  </ul>
+</li>
+
+<li class="{% if cp contains '/contact-us-tutorial/using-partials' %}active{% endif %}">
+  <a href="/get-started/contact-us-tutorial/using-partials">Using Partials for Better Code Maintenance</a>
+  <ul class="submenu">
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/using-partials#create-partials-directory", text: "Create Partials Directory" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/using-partials#create-the-form-partial", text: "Create the Form Partial" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/using-partials#use-partials-and-render-in-the-contact-us-page", text: "Use Partials and Render in the Contact Us Page" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/using-partials#use-the-partial-on-the-home-page", text: "Use the Partial on the Home Page" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/using-partials#add-example-data-to-the-fields", text: "Add Example Data to the Fields" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/using-partials#test-the-form", text: "Test the Form" %}
+  </ul>
+</li>
+
+<li class="{% if cp contains '/contact-us-tutorial/handling-valid-input' %}active{% endif %}">
+  <a href="/get-started/contact-us-tutorial/handling-valid-input">Handling Valid Input</a>
+  <ul class="submenu">
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/handling-valid-input#storing-the-contact-details-in-the-database", text: "Storing the Contact Details in the Database" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/handling-valid-input#create-a-table", text: "Create a Table" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/handling-valid-input#test-if-the-table-exists-in-the-database", text: "Test if the Table Exists in the Database" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/handling-valid-input#create-the-execute-command", text: "Create the Execute Command" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/handling-valid-input#invoke-the-execute-command-in-the-create-liquid-file", text: "Invoke the Execute Command in the create.liquid file" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/handling-valid-input#create-graphql-mutation", text: "Create GraphQL Mutation" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/handling-valid-input#create-the-directory-structure", text: "Create the Directory Structure" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/handling-valid-input#create-the-graphql-mutation-file", text: "Create the GraphQL Mutation File" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/handling-valid-input#define-the-mutation", text: "Define the Mutation" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/handling-valid-input#special-arguments-args", text: "Special Arguments: args" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/handling-valid-input#testing-the-mutation-using-graphiql", text: "Testing the Mutation Using GraphiQL" %}
+  </ul>
+</li>
+
+<li class="{% if cp contains '/contact-us-tutorial/redirecting-thank-you' %}active{% endif %}">
+  <a href="/get-started/contact-us-tutorial/redirecting-thank-you">Redirecting and Displaying a Thank you Message</a>
+  <ul class="submenu">
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/redirecting-thank-you#update-the-create-liquid-file", text: "Update the Create.liquid File" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/redirecting-thank-you#create-a-thank-you-page", text: "Create a Thank You Page" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/redirecting-thank-you#test-redirection-and-database", text: "Test Redirection and Database" %}
+  </ul>
+</li>
+
+
+<li class="{% if cp contains '/contact-us-tutorial/using-events' %}active{% endif %}">
+  <a href="/get-started/contact-us-tutorial/using-events">Using Events to Send Confirmation Email</a>
+  <ul class="submenu">
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/using-events", text: "Create the Directory Structure" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/using-events#create-the-event-file", text: "Create the Event File" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/using-events#define-the-event", text: "Define the Event" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/using-events#publish-the-event", text: "Publish the Event" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/using-events#understanding-the-publish-function", text: "Understanding the Publish Function" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/using-events#viewing-and-managing-events", text: "Viewing and Managing Events" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/using-events#test-events", text: "Test Events" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/using-events#moving-event-handling-to-the-page", text: "Moving Event Handling to the Page" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/using-events#create-the-event-consumer", text: "Create the Event Consumer" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/using-events#update-event-object", text: "Update Event Object" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/using-events#test-the-event-consumer", text: "Test the Event Consumer" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/using-events#add-log", text: "Add Log" %}
+    {% include "shared/nav/link", href: "/get-started/contact-us-tutorial/using-events#test-log", text: "Test Log" %}
+  </ul>
+</li>
+

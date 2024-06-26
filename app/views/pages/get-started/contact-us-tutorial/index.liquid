@@ -1,0 +1,168 @@
+---
+metadata:
+  title: Introduction & Quick Start Guide
+  description: Follow these step-by-step tutorials to build a Contact Us form on platformOS
+converter: markdown
+---
+
+## Introduction
+
+In this tutorial, we'll take a step up from the simplicity of the [To-Do list app](/get-started/build-your-first-app/) and create a _Contact Us_ form using the [platformOS core module](https://github.com/Platform-OS/pos-module-core). If you've already built your first application on platformOS, this project will help you enhance your skills and tackle a more complex challenge.
+
+We'll build on the knowledge you gained from implementing the To-Do list app, introducing new concepts and techniques. By the end, you’ll understand how to build more sophisticated applications.
+
+## Functionalities a Contact Us form needs
+
+Before we start, let's outline the core functionalities of our Contact Us form:
+
+* **Display Form on Homepage**: Show a form on the homepage with two fields: "email" and "body".
+* **Form Submission Handling**: When the form is submitted, it should trigger a POST request to the /contacts/create page.
+* **Input Validation**: Implement the following Business Rules using the Command approach described in the [core module's README](https://github.com/Platform-OS/pos-module-core):
+    * Ensure that the email provided by the user looks like a valid email address.
+    * Ensure that the body is at least 10 characters long and has no more than 200 characters.
+
+**If input is valid:**
+
+* Store the contact information in the database.
+* Use Events (as described in the [core module's README](https://github.com/Platform-OS/pos-module-core)) to send a confirmation email to the address provided by the user with a simple static confirmation that their request was received.
+* Redirect the user to `/contact/thanks` and display a simple "Thank you" message.
+    
+**If input is invalid:**
+    
+* Redisplay the form.
+* Show relevant error messages.
+* Pre-fill the form with the submitted data.
+
+
+## Quick Start Guide
+
+Before you start implementing the _Contact Us_ form, follow these steps to get the necessary setup follow:
+
+### Step 1: Sign up and log in to the Partner Portal
+
+Sign up and log in to the [Partner Portal](https://partners.platformos.com/). 
+
+If you have already gone through [/try](https://www.platformos.com/try) or built a [To Do app](/get-started) as part of the get started process, you should already have a Partner Portal account.
+
+For further details, refer to the [Sign up on the Partner Portal](get-started/installation-and-configuration/#sign-up-on-the-partner-portal) guide.
+
+
+### Step 2: Create a new instance
+
+Create a new instance in the Partner Portal by navigating to [Create > Instance](https://partners.platformos.com/instances/new).
+
+Learn more about [what an instance is](/developer-guide/glossary#instance) or refer to the [Create an instance](/get-started/installation-and-configuration/#create-an-instance) guide.
+
+{% # TODO: check size %}
+
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/new_instance_details.png' | asset_url }}" alt="The new instance you are creating">
+
+The instance needs to be activated.
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/new_instance_ready.png' | asset_url }}" alt="The new instance is ready">
+
+### Step 3: Check if you have platformOS check and pos-cli installed
+
+Check if you have platformOS check and pos-cli installed:
+
+<pre class="command-line" data-user="user" data-host="host"><code class="language-bash">
+platformos-check -v
+pos-cli -v
+</code></pre>
+
+{% include 'alert/note', content: 'On Windows, you do not need to install `platformos-check` separately, as it is included in our [VS Code extension](https://marketplace.visualstudio.com/items?itemName=platformOS.platformos-check-vscode).' %}
+
+If you haven't installed pos-cli, you can do so globally using npm:
+
+<pre class="command-line" data-user="user" data-host="host"><code class="language-bash">
+npm install -g @platformos/pos-cli
+</code></pre>
+
+
+For further details, refer to the [Installation and Configuration guide](/get-started/installation-and-configuration/), the [Install pos-cli guide](/get-started/installation-and-configuration/#install-pos-cli),  and the [platformos-check guide](https://github.com/Platform-OS/platformos-check).
+
+
+### Step 4: Create the project folder
+
+Create the directory for the Contact Us project on your machine:
+
+<pre class="command-line" data-user="user" data-host="host"><code class="language-bash">
+mkdir contact-us
+cd contact-us
+</code></pre>
+
+{% include 'alert/note', content: 'This directory will be considered the **project root**, and all future commands, such as `pos-cli sync` and `pos-cli env add`, will need to be executed from this directory. If you encounter any errors with `pos-cli` about missing environments or other issues, the first thing to check is whether the command was executed from the project root.' %}
+
+
+### Step 5: Authenticate your environment
+
+For pos-cli to know which instance is related to any particular codebase, you need to make a connection between those. Authenticate your environment:
+
+<pre class="command-line" data-user="user" data-host="host"><code class="language-bash">
+pos-cli env add --url https://YOUR-INSTANCE.staging.oregon.platform-os.com staging
+</code></pre>
+
+A hidden `.pos` file has been created, and this is what pos-cli uses behind the scenes to authenticate.
+
+For further details, refer to the [Authenticate your environment](get-started/working-with-the-code-and-files/#authenticate-your-environment) guide.
+
+### Step 6: Authorize your instance
+
+Authorize your instance in the browser when prompted:
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/authorize.png' | asset_url }}" alt="Authorize button on the Partnerl Portal">
+
+You should receive the following message:
+
+<pre class="command-line" data-user="user" data-host="host"><code class="language-bash">
+Environment https://contactus.staging.oregon.platform-os.com/ as staging has been added successfully.
+</code></pre>
+
+### Step 7: Install the platformOS core module
+
+Ensure that you are in the project root, then:
+
+<pre class="command-line" data-user="user" data-host="host"><code class="language-bash">
+pos-cli modules install core
+pos-cli modules download core
+</code></pre>
+
+Read and follow the instructions in the installation section of the [platformOS core module documentation](https://github.com/Platform-OS/pos-module-core) for further details.
+
+#### Step 8: Upload your code to your instance
+
+<pre class="command-line" data-user="user" data-host="host"><code class="language-bash">
+pos-cli deploy staging
+</code></pre>
+
+For further details, refer to the [Upload your code to an instance](/get-started/working-with-the-code-and-files/#upload-your-code-to-an-instance) guide.
+
+### Step 9: Enable code syncing
+
+<pre class="command-line" data-user="user" data-host="host"><code class="language-bash">
+pos-cli sync staging
+</code></pre>
+
+For further details, refer to the [Upload code changes automatically when you save the file](/get-started/working-with-the-code-and-files/#upload-code-changes-automatically-when-you-save-the-file) guide.
+
+### Step 10: Start the pos-cli GUI
+
+Use platformOS’s database management tool, which is part of pos-cli. Start the pos-cli GUI and sync your environment with a single command:
+
+<pre class="command-line" data-user="user" data-host="host"><code class="language-bash">
+pos-cli gui serve staging --sync
+</code></pre>
+
+For further details, refer to the [Starting the GUI](/developer-guide/pos-cli/manage-database-using-pos-cli-gui.liquid#starting-the-gui) guide.
+
+### Step 11: Install the platformOS VSCode Extension
+
+We highly recommend installing the [platformOS VSCode Extension](https://github.com/Platform-OS/platformos-check-vscode) for an easier development experience. On Windows, it works out of the box. For OSX/Linux, you'll need to manually install Ruby and [platformos-check](https://github.com/Platform-OS/platformos-check).
+
+With these steps completed, you are now ready to start building your _Contact Us_ form. Let's dive into the details of implementing the form, setting up validations, and handling form submissions in the next sections.
+
+{% include 'alert/note', content: 'For further details, read the [Installation and Configuration](https://documentation.platformos.com/get-started/installation-and-configuration/) chapters.' %}
+
+{% render 'alert/next', content: 'Building the User Interface', url: '/get-started/contact-us-tutorial/building-the-ui' %}

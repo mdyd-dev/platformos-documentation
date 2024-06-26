@@ -1,0 +1,226 @@
+---
+metadata:
+  title: Defining the Email
+  description: Follow these step-by-step tutorials to build a Contact Us form on platformOS
+converter: markdown
+---
+
+To complete the task, let's define the email that should be sent to the submitter after their contact request has been submitted.
+
+We'll edit the previously created `notify_submitter.liquid` file to include the email logic.
+
+First, copy the [code from the core module documentation for email sending](https://github.com/Platform-OS/pos-module-core?tab=readme-ov-file#email-sending) and paste into the `notify_submitter.liquid` file:
+
+#### app/lib/consumers/contact_created/notify_submitter.liquid
+
+{% raw %}
+```liquid
+{% parse_json object %}
+  {
+    "to":      "grievous@example.com",
+    "from":    "kenobi@example.com",
+    "cc": [],
+    "bcc": [],
+    "subject": "Hello there!",
+    "layout": "path/to/my_layout",
+    "partial": "path/to/email_partial",
+    "data": { "user": " { "first_name:" "John" } }
+  }
+{% endparse_json %}
+{% function _ = 'modules/core/commands/email/send', object: object %}
+```
+{% endraw %}
+
+Let’s adjust it to the functionality of our Contact Us form, and add a log for debugging:
+
+#### app/lib/consumers/contact_created/notify_submitter.liquid
+
+{% raw %}
+```liquid
+{% log event, type: "this is an event from the notify submitted consumer!" %}
+{% parse_json object %}
+    {
+      "to":      "{{ event.email }}",
+      "from":    "noreply@platformos.com",
+      "cc": [],
+      "bcc": [],
+      "subject": "Your request has been submitted",
+      "partial": "emails/contacts/notify_submitter",
+      "data": {}
+    }
+  {% endparse_json %}
+  {% function _ = 'modules/core/lib/commands/email/send', object: object %}
+```
+{% endraw %}
+
+What we’ve modified:
+
+{% raw %}
+```liquid
+{% log event, type: "this is an event from the notify submitted consumer!" %}
+```
+{% endraw %}
+
+Adding a log entry helps in debugging by capturing the event details whenever this consumer is triggered. This can be useful for tracing and ensuring that the event is being processed correctly.
+
+{% raw %}
+```liquid
+"to": "{{ event.email }}",
+```
+{% endraw %}
+
+Instead of sending the email to a static address, we now use a dynamic email address from the event object. This ensures that the email is sent to the submitter of the contact request.
+
+{% raw %}
+```liquid
+"from": "noreply@platformos.com",
+```
+{% endraw %}
+
+This specifies a generic "noreply" address to be used as the sender, which is a common practice for automated emails.
+
+{% raw %}
+```liquid
+"subject": "Your request has been submitted",
+```
+{% endraw %}
+
+The subject line is updated to be more relevant to the context, informing the user that their contact request has been submitted.
+
+{% raw %}
+```liquid
+"partial": "emails/contacts/notify_submitter",
+```
+{% endraw %}
+
+This points to the specific partial template that contains the content of the email. This ensures that the correct message is sent to the user.
+
+## Create partials directory for the email template
+
+Now, we need to make sure this path exist which contains the email template: 
+
+Create the following directories:
+
+<pre class="command-line" data-user="user" data-host="host"><code class="language-bash">
+mkdir -p app/views/partials/emails/contacts
+</code></pre>
+
+## Create the email template
+
+We need to create the email template that will be used to notify the submitter once their contact request has been successfully processed. This involves adding the necessary HTML content to a new file in the appropriate directory.
+
+Create a file named `notify_submitter.liquid` inside the `app/views/partials/emails/contacts` directory:
+
+<pre class="command-line" data-user="user" data-host="host"><code class="language-bash">
+views/partials/emails/contacts/notify_submitter.liquid
+</code></pre>
+
+Add the following HTML content:
+
+#### app/views/partials/emails/contacts/notify_submitter.liquid
+
+{% raw %}
+```liquid
+<h1>Hello!</h1>
+
+<p>Your contact request has been submitted, we will contact you shortly.</p>
+
+{% log "Email has been sent" %}
+```
+{% endraw %}
+
+{% raw %}
+We added a ``{% log "Email has been sent" %}`` log entry indicating that the email has been sent. This is useful for debugging purposes, allowing you to confirm that the email was processed.
+{% endraw %}
+
+## Add logs for debugging
+
+To ensure everything is working correctly, we should add log statements that will help us inspect the `contact` and `event_object` variables at specific points in the process.
+
+Add logging statements to the `create.liquid` file to help with debugging:
+
+#### app/views/pages/contacts/create.liquid
+
+{% raw %}
+```liquid
+---
+method: post
+---
+{% function contact = 'commands/contacts/create', object: context.params.contact %}
+{% if contact.valid %}
+  {% log contact, type: 'contact after valid' %}
+  {% assign event_object = '{}' | parse_json | hash_merge: id: contact.id %}
+  {% hash_assign event_object["email"] = contact.email %}
+  {% log event_object, type: 'event object' %}
+  {% function _ = 'modules/core/commands/events/publish', type: 'contact_created', object: event_object %}
+  {% redirect_to '/contacts/thanks' %}
+{% else %}
+  {% render 'contacts/form', contact: contact %}
+{% endif %}
+```
+{% endraw %}
+
+The added log statements allow you to inspect the `contact` and `event_object` variables at specific points in the process. This can be useful for debugging purposes, ensuring that the `contact` has been correctly validated and that the `event_object` has been correctly formed with the necessary properties:
+
+{% raw %}
+```liquid
+{% log contact, type: 'contact after valid' %}
+```
+{% endraw %}
+
+{% raw %}
+```liquid
+{% log event_object, type: 'event object' %}
+```
+{% endraw %}
+
+## Final testing
+
+It’s time for our final test! After submitting the form with valid data, navigate to [http://localhost:3333/logs](http://localhost:3333/logs) to review the logs. If everything is set up correctly, you should encounter a log entry similar to the following:
+
+```html
+05/06/2024 18:22:51	info	
+Email has been sent 	log
+```
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/log_email_sent.png' | asset_url }}" alt="Log entry showing email sent confirmation">
+
+However, the following message indicates that the email delivery was skipped due to the lack of a configured test email:
+
+```html
+05/06/2024 18:22:51	MailDeliverySkipped	
+Email to ["mytest@email.com"] with subject "Your request has been submitted" has not been sent - please configure test_email. You can read more at https://documentation.platformos.com/developer-guide/partner-portal/instances/configuring-test-email
+```
+
+While this configuration is necessary for proper email delivery testing, for the purpose of this task, it's considered complete.
+
+For further details, refer to the [Configuring a Test Email](/developer-guide/partner-portal/instances/configuring-test-email#step-1-set-up-test-email-for-the-instance) chapter of the platformOS documentation.
+
+## Clean up
+
+As the very last step of our task, let's tidy things up by removing unnecessary logs. 
+
+In the `app/views/pages/contacts/create.liquid` file, locate and remove any logging statements you find:
+
+#### app/views/pages/contacts/create.liquid
+
+{% raw %}
+```liquid
+app/views/pages/contacts/create.liquid
+---
+method: post
+---
+{% function contact = 'commands/contacts/create', object: context.params.contact %}
+{% if contact.valid %}
+  {% assign event_object = '{}' | parse_json | hash_merge: id: contact.id %}
+  {% hash_assign event_object["email"] = contact.email %}
+  {% function _ = 'modules/core/commands/events/publish', type: 'contact_created', object: event_object %}
+  {% redirect_to '/contacts/thanks' %}
+{% else %}
+  {% render 'contacts/form', contact: contact %}
+{% endif %}
+```
+{% endraw %}
+
+Congratulations on finishing the _Contact Us_ form task!

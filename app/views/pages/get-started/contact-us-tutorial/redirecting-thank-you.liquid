@@ -1,0 +1,83 @@
+---
+metadata:
+  title: Redirecting and Displaying a Thank you Message
+  description: Follow these step-by-step tutorials to build a Contact Us form on platformOS
+converter: markdown
+---
+
+To complete our task, we need to redirect users to a "Thank you" page (/contacts/thanks) after they successfully submit the Contact Us form.
+
+## Update the create.liquid file
+
+Add the `redirect_to` logic in your `create.liquid` file to handle the redirection upon successful form submission.
+
+#### app/views/pages/contacts/create.liquid
+
+{% raw %}
+```liquid
+---
+method: post
+---
+{% function contact = 'commands/contacts/create', object: context.params.contact %}
+{% if contact.valid %}
+  {% redirect_to '/contacts/thanks' %}
+{% else %}
+  {% render 'contacts/form', contact: contact %}
+{% endif %}
+```
+{% endraw %}
+
+This code will check if the contact creation is valid and, if so, redirect the user to the `/contacts/thanks` page. If the validation fails, it will re-render the form with the contact data.
+
+## Create a Thank you page
+
+Create a simple "Thank You" page that the user will be redirected to upon successful form submission.
+
+Create a `thanks.liquid` file:
+<pre class="command-line" data-user="user" data-host="host"><code class="language-bash">
+app/views/pages/contacts/thanks.liquid
+</code></pre>
+
+Add content:
+
+#### app/views/pages/contacts/thanks.liquid
+
+
+```html
+Thank you!
+```
+
+This file will display a simple "Thank you" message when the user is redirected to the `/contacts/thanks` URL.
+
+```html
+app
+└── views
+    └── pages
+        └── contacts
+            ├── create.liquid
+            └── thanks.liquid
+```
+
+## Test redirection and database
+
+Now that we have implemented the redirection and the thank you page, let's test to ensure everything works as expected.
+
+Ensure that all modifications have been synced to your platformOS instance.
+
+### Test using invalid data
+
+Open your _Contact Us_ form and submit invalid data first. The form should re-render with error messages indicating the validation issues.
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/contactus_invalid_graphql.png' | asset_url }}" alt="Displaying validation errors on the Contact Us form">
+
+##### Test using valid data
+
+Now, submit the form with valid data. You should be redirected to the `/contacts/thanks` page, displaying the "Thank you!" message.
+
+Verify that the data has been correctly stored in the [database](http://localhost:3333/database) and confirm the new contact record.
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/contactus_thanks_database.gif' | asset_url }}" alt="Verifying stored data in the database post submission">
+
+{% render 'alert/next', content: 'Using Events to Send Confirmation Email', url: '/get-started/contact-us-tutorial/using-events' %}

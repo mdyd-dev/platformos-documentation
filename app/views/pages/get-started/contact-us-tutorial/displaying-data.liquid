@@ -1,0 +1,228 @@
+---
+metadata:
+  title: Displaying Data
+  description: Follow these step-by-step tutorials to build a Contact Us form on platformOS
+converter: markdown
+---
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/fill_form_no_render.gif' | asset_url }}" alt="Filling the form without any render">
+ 
+Now, if you fill in the form and there are no errors in the logs, you can see that nothing is rendered. This is expected as we haven't instructed the system to display anything yet.
+
+**Note:**
+
+In platformOS, you can display data using double curly brackets {% raw %}{{ }}{% endraw %} for output, or dedicated tags like {% raw %}{% print %}{% endraw %}` and `{% raw %}{% echo %}{% endraw %}`.
+
+## Invoke the Check Command
+
+We have our build command set up, so the next step is to invoke it in the `app/lib/commands/contacts/create.liquid` file:
+
+#### app/lib/commands/contacts/create.liquid
+
+{% raw %}
+```liquid
+{% function object = 'commands/contacts/create/build', object: object %}
+{% function object = 'commands/contacts/create/check', object: object %}
+{% log contact_after_validation, type: 'result of invoking check' %}
+
+{% return contact %}
+
+```
+{% endraw %}
+
+Typically, when working with commands, you might overwrite the `object`. For now, we'll use different variable names to avoid confusion:
+
+#### app/lib/commands/contacts/create.liquid
+
+{% raw %}
+```liquid
+{% function contact = 'commands/contacts/create/build', object: object %}
+{% function contact_after_validation = 'commands/contacts/create/check', object: contact %}
+{% log contact_after_validation, type: 'result of invoking check' %}
+
+{% return contact %}
+
+```
+{% endraw %}
+
+The LSP tells you that `commands/contacts/create/check` is blank, so let’s create the check command as the next step.
+
+## Create the Check Command
+
+You can find a [pre-written check command in the core module documentation](https://github.com/Platform-OS/pos-module-core?tab=readme-ov-file#check), which saves you from writing it from scratch.
+
+To implement the check command, open `app/lib/commands/contacts/create/check.liquid`.
+
+{% include 'alert/note', content: 'You can use LSP and `CTRL + click` on the paths to easily navigate to or create the file. For example, clicking on `commands/contacts/create/check` will open or create the `check.liquid` file, allowing you to navigate there directly.' %}
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/lsp_open_path.gif' | asset_url }}" alt="Demonstrating LSP navigation with CTRL + click">
+
+Add the following from the core module documentation:
+
+#### app/lib/commands/contacts/create/check.liquid
+
+{% raw %}
+```liquid
+{% liquid
+  assign c = '{ "errors": {}, "valid": true }' | parse_json
+
+  function c = 'modules/core/validations/presence', c: c, object: object, field_name: 'title'
+  function c = 'modules/core/validations/presence', c: c, object: object, field_name: 'uuid'
+  if object.title
+    function c = 'modules/core/validations/presence', c: c, object: object, field_name: 'title'
+    function c = 'modules/core/validations/length', c: c, object: object, field_name: 'title', minimum: 3
+    function c = 'modules/core/validations/length', c: c, object: object, field_name: 'title', maximum: 130
+  endif
+
+  function c = 'modules/core/validations/uniqueness', c: c, object: object, field_name: 'uuid'
+
+  assign object = object | hash_merge: c
+
+  return object
+%}
+```
+{% endraw %}
+
+To adjust the check command for our _Contact Us_ form, let's simplify it as follows:
+
+#### app/lib/commands/contacts/create/check.liquid
+
+{% raw %}
+```liquid
+{% liquid
+  assign c = '{ "errors": {}, "valid": true }' | parse_json
+
+  assign object = object | hash_merge: c
+
+  return object
+%}
+```
+{% endraw %}
+
+In `app/lib/commands/contacts/create.liquid`, we have our `contact` object, which includes `email` and `body` properties. We then pass this object to the check command.
+
+In the check command, we created a new object `c`, which is short for `contact`.
+
+{% raw %}
+```liquid
+  assign c = '{ "errors": {}, "valid": true }' | parse_json
+```
+{% endraw %}
+
+This line initializes `c` with two properties:
+
+* `"errors"`:  a hash (another object) to store any validation errors.
+* `"valid"`: a boolean set to `true`, meaning the data is considered valid by default. If no validations are added, the validation will succeed.
+
+{% include 'alert/note', content: 'The `assign` tag creates a variable. Read the [assign tag documentation](https://documentation.platformos.com/api-reference/liquid/variables#assign) for further details.' %}
+
+Next, we merge this `c` object with our `contact` object using the `hash_merge` tag to combine the validation results with the original object:
+
+{% raw %}
+```liquid
+assign object = object | hash_merge: c
+```
+{% endraw %}
+
+{% include 'alert/note', content: '`hash_merge` takes two objects and merges them together. Read the [hash_merge filter documentation](/api-reference/liquid/platformos-filters#hash-merge) for further details.' %}
+
+This step combines the validation results with the original contact object. Now, the contact object includes both its original properties (`email` and `body`) and the validation results (`errors` and `valid`). This merged object allows us to track which fields failed validation and why in the logs.
+
+{% include 'alert/note', content: '`Parse_json` is a filter which transforms a string into a hash. Read the [Parse_json filter documentation](/api-reference/liquid/platformos-filters#parse-json)</code> for further details.' %}
+
+{% raw %}
+Filters are invoked via the "|" character. For example, `{{ 'hello' | upcase }}` invokes the `upcase` filter with "hello" as an argument. Tags, on the other hand, are invoked using `{% %}` characters.
+
+Keep in mind that the `parse_json` filter and tag are equivalent, and it's a matter of preference which one you use. If someone wants to associate the object `{ "hello": "world" }` with the variable "hello_json," they can achieve this with either the filter:
+{% endraw %}
+
+{% raw %}
+```liquid
+{% assign hello_json = '{ "hello": "world"}' | parse_json %}
+```
+{% endraw %}
+
+or using the tag:
+
+{% raw %}
+```liquid
+{% parse_json hello_json %}
+{ "hello": "world"}
+{% endparse_json %}
+```
+{% endraw %}
+
+## Conditional logging
+
+With the check command in place, let's add conditional logging to your `create.liquid` file to help us verify if our validation logic is working correctly. This will log a message indicating whether the data passed validation or not.
+
+Here's the code to add to your `app/lib/commands/contacts/create.liquid` file:
+
+{% raw %}
+```liquid
+{% if contact_after_validation.valid %}
+   {% log "Valid!" %}
+{% else %}
+   {% log "Not valid!" %}
+{% endif %
+```
+{% endraw %}
+
+This block checks if the `valid` property in `contact_after_validation` is true. If it is, it logs "Valid!" to indicate that the data passed validation. If not, it logs "Not valid!" to indicate that the data failed validation.
+
+Your `create.liquid` file should look like this:
+
+#### app/lib/commands/contacts/create/create.liquid
+
+{% raw %}
+```liquid
+{% function contact = 'commands/contacts/create/build', object: object %}
+{% function contact_after_validation = 'commands/contacts/create/check', object: contact %}
+
+{% if contact_after_validation.valid %}
+   {% log "Valid!" %}
+{% else %}
+   {% log "Not valid!" %}
+{% endif %}
+
+{% log contact_after_validation, type: 'result of invoking check' %}
+
+{% return contact_after_validation %}
+```
+{% endraw %}
+
+## Debugging with logs
+
+The newly added block helps us identify if the data validation is successful by logging the result. If there's an error, such as an unnecessary comma, the logs will indicate the issue.
+
+If you introduce an error (e.g., adding an extra comma to your code), submit the form and go to [http://localhost:3333/logs](http://localhost:3333/logs), you will see a Liquid error indicating the issue, similar to this:
+
+```html
+[2024-05-29 07:16:29.566Z] - Liquid error: "Liquid error: parse_json filter error: Invalid JSON: expected hash key, not a hash close (after valid) at line 1, column 32 in '{ \"errors\": {}, \"valid\": true, }\nFull Input: '{ \"errors\": {}, \"valid\": true, }'\n url: contactus.staging.oregon.platform-os.com/contacts/create\n page: contacts/create\n partial stack: commands/contacts/create(), commands/contacts/create/check()"
+```
+
+If you fix the trailing comma and resubmit the form, the log should reflect successful validation:
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/valid_log.gif' | asset_url }}" alt="Log showing successful validation after fixing errors">
+
+```html
+[2024-05-29 07:19:16.459Z] - info: Valid!
+path: /contacts/create page: contacts/create partial: commands/contacts/create
+[2024-05-29 07:19:16.459Z] - result of invoking check: {"email":"test@test.com","body":"This is a test","errors":{},"valid":true}
+path: /contacts/create page: contacts/create partial: commands/contacts/create
+```
+
+Now we have “email” and “body”, and we have those two properties, “errors” and “valid”. Those properties are available in this object, because of the `hash_merge` tag we provided in the `check.liquid` file:
+
+{% raw %}
+```liquid
+  assign object = object | hash_merge: c
+```
+{% endraw %}
+
+The reason why we do it is that we want to know if the validation fails, we need to know which field failed, and for what reason.
+
+{% render 'alert/next', content: 'Using Message Length and Email Validators', url: '/get-started/contact-us-tutorial/using-validators' %}

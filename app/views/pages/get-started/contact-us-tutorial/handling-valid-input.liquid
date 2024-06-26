@@ -1,0 +1,349 @@
+---
+metadata:
+  title: Handling Valid Input
+  description: Follow these step-by-step tutorials to build a Contact Us form on platformOS
+converter: markdown
+---
+
+When the user submits valid input through the _Contact Us_ form, we need to perform a few actions:
+
+* Store the contact data in the database.
+* Send a confirmation email to the user (a simple static confirmation that their request was received.)
+* Redirect the user to /contacts/thanks and display a simple “Thank you” message.
+
+## Storing the contact details in the database
+
+To store contact requests in the database, we need to create a new table. First, we will define the schema for this table.
+
+## Create a table
+
+Navigate to your project root and create a new directory named `schema`.
+
+<pre class="command-line" data-user="user" data-host="host"><code class="language-bash">
+mkdir app/schema
+</code></pre>
+
+Inside the `schema` directory, create a `contact.yml` file:
+
+#### app/schema/contact.yml
+
+```yml
+properties:
+- name: email
+- name: body
+```
+
+By default, properties in this YAML file are treated as strings, so you don't need to specify the data types explicitly. This schema definition is enough to create the table.
+
+## Test if the table exists in the database
+
+After defining the schema, you can verify the table creation by accessing the database interface. Open your browser and navigate to [http://localhost:3333/database](http://localhost:3333/database). You should see the new table with email and body columns, both of which are strings:
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/database_contact.png' | asset_url }}" alt="Database interface showing the newly created table with email and body columns">
+
+## Create the Execute command
+
+Now that we have our schema in place, let's integrate these actions into our application by updating the necessary files and configurations. Our goal is to validate the contact form and persist the valid data in the database. To achieve this, we will create a Liquid file that executes a GraphQL mutation.
+
+First, create the `execute.liquid` file in the following directory:
+
+{% raw %}
+```liquid
+ app/lib/commands/contacts/create/execute.liquid
+```
+{% endraw %}
+
+To populate it, you don’t have to write the execute command from scratch. Instead, let's refer to the core module documentation’s [Execute](https://github.com/Platform-OS/pos-module-core?tab=readme-ov-file#execute) section. Here's the example execute command you can use:
+
+{% raw %}
+```liquid
+{% liquid
+  graphql r = 'dummy/create', args: object
+
+  assign object = r.record_create
+  hash_assign object['valid'] = true
+
+  return object
+%}
+```
+{% endraw %}
+
+Copy the code above from the core module documentation and paste it into your `execute.liquid` file. Make the following modifications:
+
+#### app/lib/commands/contacts/create/execute.liquid
+
+{% raw %}
+```liquid
+{% liquid
+  graphql r = 'contacts/create', args: object
+
+  assign object = r.record_create
+  hash_assign object['valid'] = true
+
+  return object
+%}
+```
+{% endraw %}
+
+This command executes a GraphQL mutation to persist the data and prepares the object for further validation. Let’s break it down:
+
+{% raw %}
+```liquid
+ graphql r = 'contacts/create', args: object
+```
+{% endraw %}
+
+This line uses the graphql tag to execute a GraphQL mutation. The mutation is named `contacts/create`, and it takes `object` as an argument.
+
+{% raw %}
+```liquid
+assign object = r.record_create
+```
+{% endraw %}
+
+This line assigns the result of the mutation to the `object` variable.
+
+{% raw %}
+```liquid
+hash_assign object['valid'] = true
+```
+{% endraw %}
+
+This line artificially assigns the valid property of the `object` to `true`. This is done for consistency, as this property will be used in the `check` command.
+
+## Invoke the execute command in the create.liquid file
+
+Now that we have the execute command set up, we need to invoke this command within our main `create.liquid` file to handle the form submission process. Our goal is to ensure that the `execute` command is properly called after the `build` and `check` commands validate the contact data.
+
+Modify your `app/lib/commands/contacts/create.liquid` file:
+
+#### app/lib/commands/contacts/create.liquid
+
+{% raw %}
+```liquid
+{% function contact = 'commands/contacts/create/build', object: object %}
+{% function contact_after_validation = 'commands/contacts/create/check', object: contact %}
+
+{% if contact_after_validation.valid %}
+    {% function contact_after_execute = 'commands/contacts/create/execute', object: contact_after_validation %}
+{% endif %}
+
+{% return contact_after_execute %}
+```
+{% endraw %}
+
+Let’s see what we do here:
+
+{% raw %}
+```liquid
+{% function contact = 'commands/contacts/create/build', object: object %}
+```
+{% endraw %}
+
+This line invokes the `build` command, passing the `object` (the form data). The result is assigned to the `contact` variable.
+
+{% raw %}
+```liquid
+{% function contact_after_validation = 'commands/contacts/create/check', object: contact %}
+```
+{% endraw %}
+
+This line invokes the `check` command with the `contact` object. The result is assigned to the `contact_after_validation` variable.
+
+As you notice, we added a conditional execute command invocation:
+
+{% raw %}
+```liquid
+{% if contact_after_validation.valid %}
+    {% function contact_after_execute = 'commands/contacts/create/execute', object: contact_after_validation %}
+{% endif %}
+```
+{% endraw %}
+
+If the `contact_after_validation` object is valid, the execute command is invoked, passing the validated `contact` object. The result is assigned to the `contact_after_execute` variable.
+
+{% raw %}
+```liquid
+{% return contact_after_execute %}
+```
+{% endraw %}
+
+Then the final result after execution is returned.
+
+If you try it, now the invalidation won’t work – it just won't work partially. For the happy path, when the user submits the input correctly, everything will be fine. However, when the user provides invalid input, we'll still try to `return contact_after_execute`, even though we've never reached this point because `contact_after_validation.valid` is `false` in this scenario. This means we'll return `null`, losing information about validation error messages and the original user input.
+
+A way to fix it would be by returning the correct variable if `valid` is false: 
+
+{% raw %}
+```liquid
+{% if contact_after_validation.valid %}
+    {% function contact_after_execute = 'commands/contacts/create/execute', object: contact_after_validation %}
+    {% return contact_after_execute %}
+{% else %}
+    {% return contact_after_validation %}
+{% endif %}
+```
+{% endraw %}
+
+Instead of these solutions, let’s rename everything to `object`:
+
+#### app/lib/commands/contacts/create.liquid
+
+{% raw %}
+```liquid
+{% function object = 'commands/contacts/create/build', object: object %}
+{% function object = 'commands/contacts/create/check', object: object %}
+
+{% if object.valid %}
+    {% function object = 'commands/contacts/create/execute', object: object %}
+{% endif %}
+   
+{% return object %}
+```
+{% endraw %}
+
+## Create GraphQL Mutation
+
+The final step is to create a GraphQL mutation to persist the contact data in the database. This involves creating the necessary directories and files to store the GraphQL mutation.
+
+## Create the directory structure
+
+Navigate to your project root and create the necessary folders for storing GraphQL files:
+
+<pre class="command-line" data-user="user" data-host="host"><code class="language-bash">
+mkdir -p app/graphql/contacts
+</code></pre>
+
+## Create the GraphQL mutation file
+
+Inside the `app/graphql/contacts` directory, create a file named create.graphql
+
+<pre class="command-line" data-user="user" data-host="host"><code class="language-bash">
+app/graphql/contacts/create.graphql
+</code></pre>
+
+## Define the mutation
+
+Open `app/graphql/contacts/create.graphql` and add the following mutation code:
+
+#### app/graphql/contacts/create.graphql
+
+```graphql
+mutation contact_create($email: String!, $body: String!) {
+  record_create(
+    record: {
+      table: "contact"
+      properties: [
+        { name: "email", value: $email }
+        { name: "body", value: $body }
+      ]
+    }
+  ) {
+    id
+    email: property(name: "email")
+    body: property(name: "body")
+    created_at
+  }
+}
+```
+
+Let’s break it down to see what happens:
+
+```graphql
+mutation contact_create($email: String!, $body: String!) {
+```
+
+This line defines the mutation `contact_create` and specifies that it requires two parameters: `email` and `body`, both of which are strings and must be provided (`!` indicates non-nullable).
+
+```graphql
+record_create(
+  record: {
+    table: "contact"
+    properties: [
+      { name: "email", value: $email }
+      { name: "body", value: $body }
+    ]
+  }
+) {
+```
+
+This block specifies the `record_create` mutation, which creates a new record in the `contact` table. The `properties` array defines the fields to be populated with the values of `$email` and `$body`.
+
+```graphql
+id
+email: property(name: "email")
+body: property(name: "body")
+created_at
+```
+
+These lines define the fields that will be returned after the record is created. This includes the `id`, `email`, `body`, and `created_at` timestamp.
+
+
+## Special arguments: args
+
+In the context of platformOS, the `args` parameter serves as a special argument that can be either a hash or a string of arguments passed to the GraphQL query.
+
+When passing multiple arguments at once, you can encapsulate them within a JSON string. For example:
+
+{% raw %}
+```liquid
+{% capture arguments %}
+{
+  "per_page": 20,
+  "page": 2
+}
+{% endcapture %}
+
+{% graphql g = "get_models", args: arguments %}
+```
+{% endraw %}
+
+Without using `args`, you would need to specify each argument individually like this:
+
+{% raw %}
+```liquid
+{% graphql g = "get_models", page: 2, per_page: 20 %}
+```
+{% endraw %}
+
+While for a small number of arguments, this may not seem particularly beneficial, it becomes more advantageous when dealing with a larger number of arguments, such as 10 or 20.
+
+To learn more about how `args` function, refer to the [examples provided](/api-reference/liquid/platformos-tags#graphql) in the Liquid Tags chapter of the documentation.
+
+## Testing the mutation using GraphiQL
+
+The GraphiQL interface allows you to simulate and verify your GraphQL mutation before fully integrating it into your application. Let’s test the mutation we created!
+
+Navigate to the GraphiQL interface at [http://localhost:3333/gui/graphql/](http://localhost:3333/gui/graphql/). Paste the mutation code you have at `app/graphql/contacts/create.graphql` to verify its functionality.
+
+Below the editor, find the section to add query variables. Paste the following JSON code into the variables section for the test:
+
+```graphql
+{
+  "email": "testemail@email.com",
+  "body": "Hello! This is my message"
+}
+```
+
+Click the execute button and check the response to ensure that the mutation executed successfully. You should see a response containing the ID, email, body, and created_at fields, indicating that the record has been created in the database. The response should look something like this:
+
+```graphql
+{
+  "data": {
+    "record_create": {
+      "id": "9",
+      "email": "testemail@email.com",
+      "body": "Hello! This is my message",
+      "created_at": "2024-06-04T14:04:24.224Z"
+    }
+  }
+}
+```
+
+To ensure the data has been correctly stored in your platformOS database, navigate to your database interface at [http://localhost:3333/database](http://localhost:3333/database). Search for the newly created contact record to confirm its presence and validate that the email and body fields have been correctly stored.
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/test_graphql_mutation.gif' | asset_url }}" alt="Testing GraphQL mutation in action">
+
+{% render 'alert/next', content: 'Redirecting and Displaying a Thank you Message', url: '/get-started/contact-us-tutorial/redirecting-thank-you' %}

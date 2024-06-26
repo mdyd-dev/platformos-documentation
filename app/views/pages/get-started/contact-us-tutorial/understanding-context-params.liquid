@@ -1,0 +1,302 @@
+---
+metadata:
+  title: Understanding and Using Context
+  description: Follow these step-by-step tutorials to build a Contact Us form on platformOS
+converter: markdown
+---
+
+## Understanding context
+
+{% raw %}{{ context }}{% endraw %}  is a global [object](api-reference/liquid/types#hash-object) accessible in every [Liquid](/api-reference/liquid/introduction) file of the project. This includes [pages, partials and layouts](/developer-guide/platformos-workflow/directory-structure#views-pages-layouts-and-partials), as well as [Email, SMS, and API Call Notifications](/developer-guide/notifications/notifications/developer-guide/notifications/notifications). It is the only predefined [object](/api-reference/liquid/types#hash-object) that you will use when working with platformOS. This is because you are able to create your own [Objects](/api-reference/liquid/types#hash-object).
+
+{% include 'alert/note', content: 'Read more about context in the [Liquid - platformOS Objects](/api-reference/liquid/platformos-objects#context) documentation.' %}
+
+## Understanding context.params
+
+One of the properties of the global {% raw %}{{ context }}{% endraw %} object is `params`, which captures all parameters sent to the endpoint. This includes form data, query parameters, and other request details. In our example, {% raw %}{{ context.params }}{% endraw %} helps us see exactly what data is being sent to the `/contacts/create` endpoint.
+
+When working with form submissions and URL parameters in platformOS, `context.params` is a key concept to understand. It allows you to access the parameters that users submit, and these parameters can be extracted and used within your Liquid templates to dynamically handle user input. Let's dive into how you can use context.params.
+
+{% include 'alert/note', content: 'All parameters submitted by the user are available in `context.params`. This allows you to access and use these parameters within your Liquid templates, making your applications dynamic and responsive to user input. Read more about [context.params](/api-reference/liquid/platformos-objects#context-params) in the platformOS documentation.' %}
+
+## Adding parameters to your template
+
+The following sections are not part of the main task; they are provided for demonstration purposes. However, we recommend following along and using the code snippets to gain a better understanding of this concept. If you understand how context.params work already, skip this chapter and continue from [Using context.params in the create.liquid file](/get-started/contact-us-tutorial/understanding-context-params#using-context-params-in-the-create-liquid-file).
+
+First, let's see how parameters can be accessed in a Liquid template. In the previous step, we added 
+
+{% raw %}
+```liquid
+Hello {{ context.params }}
+```
+{% endraw %}
+
+to our `/app/views/pages/contacts/create.liquid` file.
+
+For testing purposes, temporarily add the following code to your `app/views/pages/index.html.liquid` file:
+
+#### app/views/pages/index.html.liquid
+
+{% raw %}
+```liquid
+My parameters {{ context.params }}
+
+<h2>Contact Us</h2>
+<form action="/contacts/create" method="post">
+<input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
+    <div>
+        <label for="email">Email</label>
+        <input type="text" name="contact[email]" id="email">
+    </div>
+    <div>
+      <textarea name="contact[body]"></textarea>
+    </div>
+    <input type="submit" value="Send">
+  </form>
+```
+{% endraw %}
+
+Navigate to your home page. You should see something like:
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/contact_us_parameters.png' | asset_url }}" alt="Display of parameters on the homepage">
+
+
+```html
+My parameters {"format":"html"}
+```
+
+You might notice that there are no parameters initially displayed, except the default HTML format. This is because parameters need to be explicitly provided in the URL or through form submissions.
+
+## Example URL with parameters
+
+To see how parameters work, add a query parameter to the URL in your browser:
+
+```html
+/?hello_world=hi
+```
+
+The page will display:
+
+```html
+My parameters: {"hello_world":"hi","format":"html"}
+```
+
+Here, `hello_world` is the key, and `hi` is its value.
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/parameters_hello_hi.png' | asset_url }}" alt="Screenshot showing key 'hello_world' with value 'hi'">
+
+## Providing multiple parameters
+
+You can provide multiple parameters in the URL like this:
+
+```html
+/?hello_world=hi&another=val2
+```
+
+This will display:
+
+```html
+My parameters: {"hello_world":"hi","another":"val2","format":"html"}
+```
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/parameters_another_val.png' | asset_url }}" alt="Screenshot showing multiple parameters including 'hello_world', 'another', and 'format'">
+
+## Using arrays and hashes
+
+You can also provide an array of attributes. For example:
+
+```html
+/?hello_world=hi&another=val2&arr[]=1&arr[]=2
+```
+
+This will display:
+
+```html
+My parameters: {"hello_world":"hi","another":"val2","arr":["1","2"],"format":"html"}
+```
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/parameters_array.png' | asset_url }}" alt="Screenshot showing complex parameters including 'hello_world', 'another', 'arr', and 'format'">
+
+You can even include hashes:
+
+```html
+/?hello_world=hi&another=val2&arr[]=1&arr[]=2&test[debug]=hello
+```
+
+This will display:
+
+```html
+My parameters: {"hello_world":"hi","another":"val2","arr":["1","2"],"test":{"debug":"hello"},"format":"html"}
+```
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/parameters_hash.png' | asset_url }}" alt="Screenshot showing parameters including hashes">
+
+This output shows all the parameters passed in the URL.
+
+## Filtering specific parameters
+
+```html
+/?hello_world=hi&another=val2&arr[]=1&arr[]=2&test[debug]=hello
+```
+
+To access nested parameters, such as the value of `test[debug]`, modify your code:
+
+#### app/views/pages/index.html.liquid
+
+{% raw %}
+```liquid
+My parameters: {{ context.params.test.debug }}
+```
+{% endraw %}
+
+This would display:
+
+```html
+My parameters: hello
+```
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/parameters_hello.png' | asset_url }}" alt="Displaying nested parameters">
+
+Nested parameters are structured in a way that allows you to access specific parts of a data object. For example, if you have a parameter structure like `test[debug]=hello`, you can access the `debug` value within the `test` object using dot notation in Liquid templates.
+
+Similarly, if you have an array passed as a parameter, you can access it using the following syntax:
+
+#### app/views/pages/index.html.liquid
+
+{% raw %}
+```liquid
+My parameters: {{ context.params.arr }}
+```
+{% endraw %}
+
+This would display:
+
+```html
+My parameters: ["1","2"]
+```
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/parameters_arr.png' | asset_url }}" alt="Displaying array parameters">
+
+When you access `{% raw %}{{ context.params.arr }}{% endraw %}`, platformOS retrieves the array associated with the `arr` key. In this case, the array contains the values `1` and `2`.
+
+
+## Clean up your code 
+
+As this exercise was for demonstration purposes, remove `My parameters: {{ context.params }}` from your `index.html.liquid file`. Ensure the file looks like this:
+
+#### app/views/pages/index.html.liquid
+
+
+{% raw %}
+```liquid
+<h2>Contact Us</h2>
+<form action="/contacts/create" method="post">
+<input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
+    <div>
+        <label for="email">Email</label>
+        <input type="text" name="contact[email]" id="email">
+    </div>
+    <div>
+      <textarea name="contact[body]"></textarea>
+    </div>
+    <input type="submit" value="Send">
+  </form>
+```
+{% endraw %}
+
+With the above steps followed, we hope this guide has given you a clear understanding of handling parameters in your platformOS applications.
+
+### Using context.params in the create.liquid file
+
+With the understanding that all parameters submitted by the user are available in `context.params`, let’s see how to use it in our _Contact Us_ form.
+
+{% include 'alert/note', content: 'All parameters submitted by the user are available in `context.params`. This allows you to access and use these parameters within your Liquid templates, making your applications dynamic and responsive to user input.' %}
+
+
+## Add context.params to the create.liquid file
+
+We previously added the following code our `create.liquid` file:
+
+#### app/views/pages/contacts/create.liquid
+
+{% raw %}
+```liquid
+---
+method: post
+---
+
+Hello {{ context.params }}
+```
+{% endraw %}
+
+Now, if you fill in the form and hit _Send_ with some test data, you will get a similar response:
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/test_message_context.params.png' | asset_url }}" alt="Response showing context parameters with submitted data">
+
+```html
+Hello {"authenticity_token":"Fg1MsbAzN42maOhvTLZll3jF-NwGrguar7BgrXfwmnts0usK9dCkwEtqposxcU4_Otdk28UDPRPeX-8py2c9ng","contact":{"email":"test@test.com","body":"Test message"},"slug":"contacts","slug2":"create","format":"html"}
+```
+
+## Filter contact information
+
+To proceed with the task, you need to filter and extract only the relevant information, specifically the contact information: the user’s email and message (body).
+
+#### app/views/pages/index.html.liquid
+
+{% raw %}
+```liquid
+<h2>Contact Us</h2>
+<form action="/contacts/create" method="post">
+<input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
+    <div>
+        <label for="email">Email</label>
+        <input type="text" name="contact[email]" id="email">
+    </div>
+    <div>
+      <textarea name="contact[body]"></textarea>
+    </div>
+    <input type="submit" value="Send">
+  </form>
+```
+{% endraw %}
+
+In our form, the `name` attributes are defined as `contact[email]` and `contact[body]`. To access the submitted email and body within your Liquid template, use `{% raw %}{{ context.params }}{% endraw %}`. This will output the entire contact object, including both the email and body.
+
+#### app/views/pages/contacts/create.liquid
+
+{% raw %}
+```liquid
+---
+method: post
+---
+
+Hello {{ context.params.contact }}
+```
+{% endraw %}
+
+These nested names create a structured JSON object within `context.params` under the `contact` key.
+
+## Test the form
+
+Now that we've added `{% raw %}{{ context.params.contact }}{% endraw %}` to our template, let's test the form by submitting it with test data.
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/contactus_test_context_param_contect.gif' | asset_url }}" alt="Testing the form with context parameters">
+
+If the user enters test@test.com for the email and Test message for the body, the output will be:
+
+```html
+Hello {"email":"test@test.com","body":"Test message"}
+```
+
+{% include 'alert/tip', content: 'Using `context.params.contact`, you can efficiently process the user contact information, making it easier to implement further business logic and validation.' %}
+
+{% render 'alert/next', content: 'Implementing Business Rules Using Commands', url: '/get-started/contact-us-tutorial/implementing-business-rules' %}

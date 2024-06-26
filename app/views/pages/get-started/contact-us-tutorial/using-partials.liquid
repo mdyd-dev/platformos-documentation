@@ -1,0 +1,129 @@
+---
+metadata:
+  title: Using Partials for Better Code Maintenance
+  description: Follow these step-by-step tutorials to build a Contact Us form on platformOS
+converter: markdown
+---
+
+Now that our _Contact Us_ form is working as expected, we should consider code maintenance. The current solution has a significant drawback: if we need to change anything on our home page, those changes won't be reflected in other parts of the site. To solve this problem, we can use partials. Partials allow us to extract reusable pieces of code, reducing duplication and improving maintainability.
+
+## Create partials directory
+
+First, let's create a directory for our partials. We'll place these in a new `partials` directory inside `app/views`.
+
+Create directories `app/views/partials/contacts`:
+
+<pre class="command-line" data-user="user" data-host="host"><code class="language-bash">
+mkdir -p app/views/partials/contacts
+</code></pre>
+
+## Create the form partial
+
+Next, create a new file named `form.liquid` in the `app/views/partials/contacts` directory. This file will contain the interface part of the _Contact Us_ form.
+
+#### app/views/partials/contacts/form.liquid
+
+{% raw %}
+```liquid
+<h2>Contact Us</h2>
+<form action="/contacts/create" method="post">
+  <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}"</input>
+  <div>
+      <label for="email">Email</label>
+      <input type="text" name="contact[email]" id="email" value="{{ contact.email }}">
+      {% if contact.errors.email != blank %}
+        <p>{{ contact.errors.email | join: ', ' }}</p>
+      {% endif %}
+  </div>
+  <div>
+    <textarea name="contact[body]">{{ contact.body }}</textarea>
+      {% if contact.errors.body != blank %}
+        <p>{{ contact.errors.body | join: ', ' }}</p>
+      {% endif %}
+  </div>
+  <input type="submit" value="Send">
+</form>
+```
+{% endraw %}
+
+
+## Use partials and render in the Contact Us page
+
+Now, update `app/views/pages/contacts/create.liquid` to use this partial instead of duplicating the form code:
+
+#### app/views/pages/contacts/create.liquid
+
+{% raw %}
+```liquid
+---
+method: post
+---
+{% function contact = 'commands/contacts/create', object: context.params.contact %}
+{% if contact.valid %}
+    ...
+{% else %}
+    {% render 'contacts/form', contact: contact %}
+  {% endif %}
+```
+{% endraw %}
+
+{% include 'alert/note', content: "The `render` tag allows us to include the contents of one template within another. By using this tag, we can modularize our code, making it more maintainable and reusable." %}
+
+{% raw %}
+When we use `{% render 'contacts/form' %}`, we are including the form partial located at `app/views/partials/contacts/form.liquid`.
+{% endraw %}
+
+To ensure the form displays correctly with the appropriate data and error messages, we pass the `contact` object to the partial. This object contains the user’s input (e.g., email and message body) and any validation errors that need to be displayed.
+
+In this example, we pass the `contact` object to the `contacts/form` partial. By rendering the partial and passing the contact object, we ensure that the form displays correctly with the appropriate data and error messages.
+
+## Use the partial on the home page
+
+We also want to use this partial on the home page. Instead of rendering the form directly, we render the partial:
+
+#### app/views/pages/contacts/index.html.liquid
+
+{% raw %}
+```liquid
+{% render 'contacts/form', contact: null %}
+```
+{% endraw %}
+
+Since there is no data to display initially, we pass `null` for the contact object.
+
+## Add example data to the fields
+
+However, we can also create an object with default values if needed. Example with default values:
+
+#### app/views/pages/contacts/index.html.liquid
+
+{% raw %}
+```liquid
+{% parse_json contact %}
+{
+  "email": "email@example.com",
+  "body": "Write your message here"
+}
+{% endparse_json %}
+{% render 'contacts/form', contact: contact %}
+```
+{% endraw %}
+
+This would display example data in the fields on our home page by default:
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/contact_us_example_data.png' | asset_url }}" alt="Contact Us form with example data">
+
+{% include 'alert/note', content: 'By using `partials` and the `render` tag, we have decoupled the business logic from the presentation, creating a more maintainable, consistent, and flexible codebase, which enhances the overall quality of the application. Any changes made to the form will now be reflected across all pages that use this partial.' %}
+
+
+## Test the form
+
+Navigate to your _Contact Us_ form and submit invalid data. The form should re-render and display the relevant error messages.
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/contactus_rendered_invalid.png' | asset_url }}" alt="Contact Us form re-rendered showing error messages">
+
+Additionally, check the home page to ensure the form displays as expected now with partials used.
+
+{% render 'alert/next', content: 'Handling Valid Input', url: '/get-started/contact-us-tutorial/handling-valid-input' %}

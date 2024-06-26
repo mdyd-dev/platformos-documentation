@@ -1,0 +1,99 @@
+---
+metadata:
+  title: Building the User Interface
+  description: Follow these step-by-step tutorials to build a Contact Us form on platformOS
+converter: markdown
+---
+
+To implement the _Contact Us_ form, we'll create a homepage with two fields: `email` and `body`, where users can enter their contact information. 
+
+{% include 'alert/tip', content: 'Creating a homepage is a bit special compared to creating a regular [page](/developer-guide/pages/pages). For detailed documentation, refer to the [Homepage](/developer-guide/pages/pages#homepage) documentation.' %}
+
+
+## Requirements
+
+* Followed all steps of the [Quick Setup Guide](/get-started/contact-us-tutorial/#quick-setup-guide) for building 
+* HTML knowledge
+* [Pages](/developer-guide/pages/pages)
+
+## Create a directory for pages
+
+First, create a directory for your pages within the `app` directory:
+
+<pre class="command-line" data-user="user" data-host="host"><code class="language-bash">
+mkdir -p app/views/pages
+</code></pre>
+
+`-p`: an option to be able to create multiple nested directories at once.
+
+{% include 'alert/tip', content: 'You can have multiple files with the same path, so organizing your files clearly is essential.' %}
+
+
+## Create a home page file
+
+We will use HTML and Liquid templating to create the form structure and input fields. Create an `index.html.liquid` file in `app/views/pages/` and add the following HTML code:
+
+#### app/views/pages/index.html.liquid
+
+{% raw %}
+```liquid
+<h2>Contact Us</h2>
+<form>
+    <div>
+        <label for="email">Email</label>
+        <input type="text" name="contact[email]" id="email">
+    </div>
+<div>
+      <textarea name="contact[body]"></textarea>
+    </div>
+    <input type="submit" value="Send">
+  </form>
+```
+{% endraw %}
+
+You might notice that we used `index.html.liquid` for our homepage file instead of `index.html`. This is because our tool can download websites and store them in HTML format, which can still be rendered by platformOS. Although using `.liquid` is not strictly necessary, we recommend it for consistency and ease of use.
+
+{% include 'alert/tip', content: 'The file extension `.html.liquid` specifies HTML as a `format` and Liquid as a render engine, allowing the use of both HTML and Liquid templating. This makes it easy to render dynamic content using platformOS. Read more about [formats](/developer-guide/pages/pages#formats).' %}
+
+## Using slug vs path to the file
+
+While it's possible to add a slug to the page that holds the homepage content, it's not the recommended approach, unless necessary. If someone needs to modify the homepage later, finding the correct file can be challenging if it’s not clearly named. For example, if the homepage content is in a file named `hello.html`, it’s not immediately clear that this file represents the homepage. This can be even more confusing if there are nested directories.
+
+The recommended approach is to use the file path as the default route. This method automatically uses the name of the file as the path, which greatly improves user experience and maintainability. 
+
+The name of the file will be automatically used as the path. In our case, `app/views/pages/index.html.liquid` will default to `/`.
+
+However, you will see some exceptions later in this task, such as creating the `/contacts/create` page using a slug `contacts` to follow RESTful URL conventions. For more information on using RESTful URLs, [refer to this guide](https://apiguide.readthedocs.io/en/latest/build_and_publish/use_RESTful_urls.html).
+
+{% include 'alert/tip', content: '
+  The homepage slug is `/`, which will work for 
+  <ul>
+    <li><a href="https://example.com">https://example.com</a></li>
+    <li><a href="https://example.com/">https://example.com/</a></li>
+    <li><a href="https://example.com/index.html">https://example.com/index.html</a></li>
+  </ul>
+  The slug of the file `app/views/pages/index.liquid` defaults to `/`.
+' %}
+
+## Deploy and check
+
+Deploy your file
+
+<pre class="command-line" data-user="user" data-host="host"><code class="language-bash">
+pos-cli deploy staging
+</code></pre>
+
+or sync your changes to the instance:
+
+<pre class="command-line" data-user="user" data-host="host"><code class="language-bash">
+pos-cli sync staging
+</code></pre>
+
+Now, visit your homepage URL (https://your-instance.staging.oregon.platform-os.com/) to see the _Contact Us_ form:
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/contactus_first.png' | asset_url }}" alt="Your Contact Us form">
+
+With these steps completed, your _Contact Us_ form should be set up and ready for further development, including validation and handling form submissions. Let's proceed to implementing the backend logic and validations in the next sections!
+
+{% render 'alert/next', content: 'Setting Up Form Submission', url: '/get-started/contact-us-tutorial/setting-up-form-submission' %}

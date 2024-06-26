@@ -1,0 +1,107 @@
+---
+metadata:
+  title: Setting Up Form Submission to Trigger a POST Request
+  description: Follow these step-by-step tutorials to build a Contact Us form on platformOS
+converter: markdown
+---
+
+To ensure that our _Contact Us_ form correctly triggers a POST request to the `contacts/create` page, we need to modify the form action and handle the form submission properly. This involves modifying the form action, managing authenticity tokens, and ensuring the form data is sent correctly.
+
+## Modify the form action
+
+When you click on the _Send_ button on the _Contact Us_ form, it currently directs to the current URL with query parameters:
+
+```html
+/?contact[email]=&contact[body]=
+```
+
+We need to change this behavior so that the form submits a POST request to the `/contacts/create` endpoint.
+
+Desired URL:
+
+```html
+/contacts/create
+```
+
+In detail, we need to modify the form in `app/views/pages/index.html.liquid` to update the action attribute to point to `/contacts/create` and ensure the method is set to `POST`.
+
+To do that, add the following line to your `app/views/pages/index.html.liquid` file:
+
+```html
+<form action="/contacts/create" method="post">
+```
+
+#### app/views/pages/index.html.liquid
+
+{% raw %}
+```liquid
+<h2>Contact Us</h2>
+<form action="/contacts/create" method="post">
+    <div>
+        <label for="email">Email</label>
+        <input type="text" name="contact[email]" id="email">
+    </div>
+<div>
+      <textarea name="contact[body]"></textarea>
+    </div>
+    <input type="submit" value="Send">
+  </form>
+```
+{% endraw %}
+
+## Add missing authenticity token
+
+For security reasons, especially to prevent Cross-Site Request Forgery (CSRF) attacks, it’s important to include an authenticity token in the form. This token ensures that the form submission originates from your application.
+
+If you are using LSP, you might see a warning about the missing authenticity token:
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/lsp_authenticity_token.png' | asset_url }}" alt="LSP warning about missing authenticity token">
+
+To fix this, add the following hidden input field within the form:
+
+{% raw %}
+```liquid
+<input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
+```
+{% endraw %}
+
+This hidden field ensures that the authenticity token is sent along with the form data, which the server will verify.
+
+The updated form in `index.html.liquid` should look like this:
+
+#### app/views/pages/index.html.liquid
+
+{% raw %}
+```liquid
+<h2>Contact Us</h2>
+<form action="/contacts/create" method="post">
+<input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
+    <div>
+        <label for="email">Email</label>
+        <input type="text" name="contact[email]" id="email">
+    </div>
+    <div>
+      <textarea name="contact[body]"></textarea>
+    </div>
+    <input type="submit" value="Send">
+  </form>
+```
+{% endraw %}
+
+## Test the form submission
+
+Now, when you click on the _Send_ button, the form data will be sent via a POST request to the `/contacts/create` endpoint. The URL will change to `/contacts/create`, indicating that the form has been submitted as intended.
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/contact_form_post_endpoint.gif' | asset_url }}" alt="Form submission to the POST endpoint">
+
+For example, after submission, the URL should look like this:
+
+```html
+https://contactus.staging.oregon.platform-os.com/contacts/create
+```
+
+With this setup, your form is now correctly configured to submit data to the `contacts/create` endpoint, and includes the necessary authenticity token to protect against CSRF attacks.
+
+{% render 'alert/next', content: 'Setting Up an Endpoint', url: '/get-started/contact-us-tutorial/setting-up-endpoint' %}

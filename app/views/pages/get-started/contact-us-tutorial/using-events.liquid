@@ -1,0 +1,396 @@
+---
+metadata:
+  title: Using Events to Send Confirmation Email
+  description: Follow these step-by-step tutorials to build a Contact Us form on platformOS
+converter: markdown
+---
+
+In the next step, we'll create an event to send a simple static email confirmation to the user once their contact request has been received. 
+
+Events in platformOS allow you to record that something has happened in the system. Think of them as notes that document these occurrences. Events are stored using GraphQL mutations and can include various arguments detailing the specifics of what happened.
+
+{% include 'alert/note', content: 'For further details, refer to the core module’s documentation about [Events](https://github.com/Platform-OS/pos-module-core?tab=readme-ov-file#events).' %}
+
+## Create the directory structure
+
+First, we create the necessary directory for storing the event files:
+
+<pre class="command-line" data-user="user" data-host="host"><code class="language-bash">
+mkdir -p app/lib/events/contacts
+</code></pre>
+
+## Create the Event file 
+
+Within the `events` directory, create a file named `contact_created.liquid`:
+
+<pre class="command-line" data-user="user" data-host="host"><code class="language-bash">
+app/lib/events/contact_created.liquid
+</code></pre>
+
+## Define the Event
+
+You don’t need to write the event from scratch, you’ll find an [example event template](https://github.com/Platform-OS/pos-module-core?tab=readme-ov-file#events) in the core module documentation.
+
+Open your `contact_created.liquid` file and paste the following code into it:
+
+{% raw %}
+```liquid
+---
+metadata:
+  event:
+    foo_id
+---
+{% liquid
+  assign c = '{ "errors": {}, "valid": true }' | parse_json
+
+  function c = 'modules/core/validations/presence', c: c, object: event, field_name: 'foo_id'
+
+  # You can also enhance event object
+  hash_assign event['bar'] = 'extra info'
+
+  return c
+%}
+```
+{% endraw %}
+
+In this scenario, we want to define an event that captures when a contact form has been submitted. The crucial piece of information to store for this event is the contact ID because it serves as a unique identifier.
+
+With the contact ID, you can
+
+* Fetch the contact details from the database.
+* Retrieve the email address of the user who submitted the contact form.
+* Access the message body.
+* Check the timestamp of the submission.
+
+Modify the code to the following:
+
+#### app/lib/events//contact_created.liquid
+
+{% raw %}
+```liquid
+---
+metadata:
+  event:
+    id
+---
+{% liquid
+  assign c = '{ "errors": {}, "valid": true }' | parse_json
+
+  function c = 'modules/core/validations/presence', c: c, object: event, field_name: 'id'
+
+  return c
+%}
+```
+{% endraw %}
+
+When the contact form is successfully submitted, the event is logged with the necessary contact ID. This note allows the system to track the submission and perform any required follow-up actions, such as sending a confirmation email or updating the user interface. Let’s see what we’ve done here:
+
+```html
+---
+metadata:
+  event:
+    id
+---
+```
+
+This block specifies that the event will include an `id` field, which represents the contact ID.
+
+{% raw %}
+```liquid
+{% liquid
+  assign c = '{ "errors": {}, "valid": true }' | parse_json
+
+  function c = 'modules/core/validations/presence', c: c, object: event, field_name: 'id'
+
+  return c
+%}
+```
+{% endraw %}
+
+The Liquid code snippet validates the presence of the id field. Here's a step-by-step breakdown of what happens:
+
+{% raw %}
+```liquid
+assign c = '{ "errors": {}, "valid": true }' | parse_json
+```
+{% endraw %}
+
+This line initializes a JSON object `c` with an empty `errors` hash and sets `valid` to `true`.
+
+{% raw %}
+```liquid
+function c = 'modules/core/validations/presence', c: c, object: event, field_name: 'id'
+```
+{% endraw %}
+
+To ensure the contact ID is provided and valid, we use validation checks. The `presence` validation confirms that the contact ID is included in the event data.
+
+{% raw %}
+```liquid
+return c
+```
+{% endraw %}
+
+The function returns the validation result, including any errors and the `valid` status.
+
+## Publish the Event
+
+After defining and validating the event, the next step is to publish it. Publishing an event means notifying the system that something significant has happened, like the submission of a contact form. This step helps in tracking actions and triggers any required follow-up processes, such as sending confirmation emails or updating statuses.
+
+Copy the following code snippet from the core module documentation for [publishing an event](https://github.com/Platform-OS/pos-module-core?tab=readme-ov-file#publishing-event):
+
+{% raw %}
+```liquid
+  assign object = null | hash_merge: foo_id: "12345"
+  function _ = 'modules/core/commands/events/publish', type: 'something_happened', object: object
+```
+{% endraw %}
+
+Paste the copied code into your `app/lib/commands/contacts/create.liquid` file. This file already has the commands for building, checking, and executing the contact creation process. Integrate the publishing step as shown below:
+
+#### app/lib/commands/contacts/create.liquid
+
+{% raw %}
+```liquid
+{% liquid
+ function object = 'commands/contacts/create/build', object: object
+ function object = 'commands/contacts/create/check', object: object
+
+ if object.valid
+   function object = 'commands/contacts/create/execute', object: object
+   function _ = 'modules/core/commands/events/publish', type: 'contact_created', object: object
+ endif
+
+ return object
+%}
+```
+{% endraw %}
+
+## Understanding the publish function
+
+The `publish` function in platformOS serves to create and store events, allowing you to track and respond to significant actions in your application.
+
+It operates in the background, ensuring it doesn't block the main execution flow. This means that while your application continues to run, the event is logged in parallel.
+
+Following the command pattern, publish calls the `events/create` function defined in the core module. This modular approach allows for clear, maintainable code.
+
+The event logs the timestamp and the object provided (in this case, the contact ID). This logging mechanism helps in tracking the sequence of actions and debugging issues.
+
+Instead of creating a database record, the event is stored in an activity stream. This stream captures the payload (contact ID) and the event name (`contact_created`).
+
+{% raw %}
+```liquid
+function object = 'commands/contacts/create/build', object: object
+```
+{% endraw %}
+
+This line invokes the `build` command to construct the `contact` object.
+
+{% raw %}
+```liquid
+function object = 'commands/contacts/create/check', object: object
+```
+{% endraw %}
+
+This line validates the `contact` object to ensure all required fields are present and correct.
+
+#### Conditional Execution and Event Publishing
+
+{% raw %}
+```liquid
+if object.valid
+  function object = 'commands/contacts/create/execute', object: object
+  function _ = 'modules/core/commands/events/publish', type: 'contact_created', object: object
+endif
+```
+{% endraw %}
+
+* If the object is valid, the `execute` command is invoked to persist the contact information.
+* The `publish` function is then called to record the event `contact_created` with the contact object.
+
+Once the event is created, you don't need to take any additional actions immediately. The main purpose of creating this event is to have a record that you can use later for various purposes, such as debugging or auditing.
+
+If you need to check or debug the process, you can refer to the event to see when and where each action was invoked. For instance, if the event indicates that an order was placed, you could then send a confirmation email to the buyer. If something goes wrong in the process, the event log will help you pinpoint where the issue occurred. By logging every action, such as address verification or credit card submission, you can identify exactly where the process stopped working as expected. This detailed tracking makes it easier to diagnose and resolve issues.
+
+## Viewing and managing Events
+
+In the core module, there's a built-in UI that displays all events.
+
+To access the Events UI, add `/_events` to the end of your instance's domain in the browser's address bar.
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/events_ui.png' | asset_url }}" alt="Events UI">
+
+Initially, you won't see any events because they haven't been created yet. However, after submitting the form, you will start seeing events with their details, including the date and associated properties.
+
+## Test Events
+
+Let’s test it! Submit the form with valid data, then navigate to `/_events`. You should see something similar:
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/events_listed.png' | asset_url }}" alt="List of events created">
+
+When you submit the form, an event is created. One of the key benefits of using events is that you can create consumers that handle tasks asynchronously. For example, when a contact form is submitted, you might want to perform several actions, but it's better to handle these tasks outside of the main command to keep the command clean and efficient.
+
+To get more details about an event, click on _show_. This will display the event’s consumers. If there are no consumers, it will indicate as such.
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/events_no_consumers.png' | asset_url }}" alt="Event details showing no consumers">
+
+{% include 'alert/note', content: 'You can also re-trigger the event by clicking _broadcast_. For example, imagine something went wrong with a third-party system that the event was supposed to call. By using the "broadcast" feature, you can easily re-trigger the event, ensuring it calls the external system again without duplicating the data. This feature is very useful for maintenance, as it allows you to handle failures and re-run events as needed.' %}
+
+## Moving Event handling to the page
+
+Now our event is working, but invoking these actions immediately within the command can lead to issues. For example, you might want to create a contact without sending an email to the customer during tests.To solve this, we will move event handling out of the command and into the page itself.
+
+{% include 'alert/note', content: 'Refer to the [Handling Events](https://github.com/Platform-OS/pos-module-core?tab=readme-ov-file#handling-events) section of the core module documentation for more details.' %}
+
+Update the `create.liquid` file located at `app/views/pages/contacts/create.liquid` as follows:
+
+#### app/views/pages/contacts/create.liquid
+
+{% raw %}
+```liquid
+---
+method: post
+---
+{% function contact = 'commands/contacts/create', object: context.params.contact %}
+{% if contact.valid %}
+  {% function _ = 'modules/core/commands/events/publish', type: 'contact_created', object: event_object %}
+  {% redirect_to '/contacts/thanks' %}
+{% else %}
+  {% render 'contacts/form', contact: contact %}
+{% endif %}
+```
+{% endraw %}
+
+In this updated code, if the contact is successfully created and stored in the database, the event is broadcasted before redirecting to the thank you page. This ensures that the user receives a thank you message promptly, and any follow-up actions, such as sending an email, are handled asynchronously.
+
+{% include 'alert/tip', content: 'Using events in this way provides an additional layer of abstraction and debugging. Events are stored, allowing you to check which events were created and which consumers were notified. This makes it easier to reason about the code and handle asynchronous tasks efficiently.' %}
+
+## Create the Event Consumer
+
+To execute code on a particular event, you need to create a consumer. There can be multiple consumers for one event. We want to handle the `contact_created` event, so let’s create a consumer that sends an email notification to the submitter.
+
+Using events in this way provides an additional layer of abstraction and debugging. Events are stored, allowing you to check which events were created and which consumers were notified. This makes it easier to reason about the code and handle asynchronous tasks efficiently.
+
+{% include 'alert/note', content: 'To create a consumer, create a file in `app/lib/consumers/&lt;name_of_the_event&gt;/&lt;name_of_your_file&gt;`.' %}
+
+Create the following directories:
+
+<pre class="command-line" data-user="user" data-host="host"><code class="language-bash">
+mkdir -p app/lib/consumers/contact_created
+</code></pre>
+
+Create the consumer file:
+
+<pre class="command-line" data-user="user" data-host="host"><code class="language-bash">
+app/lib/consumers/contact_created/notify_submitter.liquid
+</code></pre>
+  
+This file will be executed asynchronously whenever the `contact_created` event is triggered. This approach ensures that the user does not have to wait for the email to be sent before receiving a confirmation message.
+
+{% include 'alert/note', content: '<p>Any Liquid file inside the directory that corresponds to the name of the event will be executed asynchronously whenever the event is triggered. This is a best practice for actions like sending emails because it allows the user to receive immediate feedback without waiting for all background tasks to complete.</p><p>By organizing your event handling this way, you ensure that actions are executed efficiently and maintainably, enhancing both user experience and system reliability.</p><p>Refer to the <a href="https://github.com/Platform-OS/pos-module-core?tab=readme-ov-file#handling-events">Handling Events</a> section of the core module documentation for more details.</p>' %}
+
+## Update Event Object
+
+To ensure the email notification is sent correctly, we need to update the event object to include the necessary information, such as the contact's ID and email. This will allow the email template to access these details directly.
+
+Update the `create.liquid` file as follows:
+
+#### app/views/pages/contacts/create.liquid
+
+{% raw %}
+```liquid
+---
+method: post
+---
+{% function contact = 'commands/contacts/create', object: context.params.contact %}
+{% if contact.valid %}
+  {% assign event_object = '{}' | parse_json | hash_merge: id: contact.id %}
+  {% hash_assign event_object["email"] = contact.email %}
+  {% function _ = 'modules/core/commands/events/publish', type: 'contact_created', object: event_object %}
+  {% redirect_to '/contacts/thanks' %}
+{% else %}
+  {% render 'contacts/form', contact: contact %}
+{% endif %}
+```
+{% endraw %}
+
+To minimize the data included in the event object, we created a new, simplified object that only contains the necessary fields. This ensures efficiency and clarity:
+
+{% raw %}
+```liquid
+ {% assign event_object = '{}' | parse_json | hash_merge: id: contact.id %}
+```
+{% endraw %}
+
+First, we start with an empty object (an empty hash `{}`). Then, we merge this empty object with another object that contains the `id` of the contact. This ensures that our event object only includes the contact's ID and nothing else.
+
+With this solution, we are avoiding the inclusion of unnecessary and potentially lengthy data such as the full contact body. However, by simplifying our event object, we no longer have direct access to some properties like the contact's `body` and `email`. While the event retains some built-in fields, it lacks the extra information we need.
+
+To address this, we will add the contact's email to the event object:
+
+{% raw %}
+```liquid
+{% hash_assign event_object["email"] = contact.email %}
+```
+{% endraw %}
+
+Adding the email directly to the event object means we don't have to go back to the database to get it later. This saves us from having to do an extra database query to find the email using the contact ID. It makes things simpler because now the email is right there in the event, ready to be used whenever we need it.
+
+{% raw %}
+```liquid
+{% function _ = 'modules/core/commands/events/publish', type: 'contact_created', object: event_object %}
+```
+{% endraw %}
+
+We used the updated event object to publish the event.
+
+## Test the Event Consumer
+
+Now if you navigate to `/_events`, and click on _show_ at a particular event, you should be able to see the consumer we created:
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/events_consumer.png' | asset_url }}" alt="Viewing the event consumer in the event log">
+
+## Add log 
+
+Add the log statement to the `notify_submitter.liquid` file (that was empty) to capture the event details:
+
+#### app/lib/consumers/contact_created/notify_submitter.liquid
+
+{% raw %}
+```liquid
+{% log event, type: "this is an event from the notify submitted consumer!" %}
+```
+{% endraw %}
+
+## Test log
+
+After submitting the form with valid data, navigate to [http://localhost:3333/logs](http://localhost:3333/logs) to check the log. You should see an entry similar to this:
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/log_notify_submitted.png' | asset_url }}" alt="Log entry showing form submission notification">
+
+```html
+05/06/2024 18:01:03	this is an event from the notify submitted consumer!	
+id: "18"
+uuid: "8be80a7c-ddda-4091-9267-c52793e664bc"
+email: "test@example.com"
+body: "test message test message test message"
+created_at: "2024-06-05T16:01:01.927Z"
+valid: true
+type: "contact_created"
+date: "2024-06-05T16:01:02.954Z"
+errors:
+consumers:
+0:
+path: "consumers/contact_created/notify_submitter"
+metadata:
+length: 1
+```
+
+This completes the process of moving event handling to the page, creating an event consumer, and testing the event consumer with logging.
+
+{% render 'alert/next', content: 'Defining the Email', url: '/get-started/contact-us-tutorial/defining-the-email' %}

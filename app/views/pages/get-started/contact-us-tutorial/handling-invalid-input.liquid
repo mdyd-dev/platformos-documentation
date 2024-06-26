@@ -1,0 +1,226 @@
+---
+metadata:
+  title: Handling Invalid Input
+  description: Follow these step-by-step tutorials to build a Contact Us form on platformOS
+converter: markdown
+---
+
+When the submitted data is invalid, we need to ensure the user can correct their mistakes without losing their data. This involves:
+
+* Rendering the form again
+* Displaying relevant error messages
+* Pre-filling the form with the data originally submitted by the user
+
+To handle invalid input, we need to introduce an `if` and `else` logic in our template. This logic will check if the submitted data is valid. If the data is valid, we process it accordingly. If the data is invalid, we render the form again with error messages and pre-filled data. This ensures the user can correct their input without having to re-enter all their data.
+
+To do this, add the following code to your `app/views/pages/contacts/create.liquid` file:
+
+#### app/views/pages/contacts/create.liquid
+
+{% raw %}
+```liquid
+---
+method: post
+---
+{% function contact = 'commands/contacts/create', object: context.params.contact %}
+{% if contact.valid %}
+	<!-- Handle valid contact submission --> 
+{% else %}
+    render the form {{ contact }}
+{% endif %}
+```
+{% endraw %}
+
+### Alert Note
+
+{% include 'alert/note', content: ' When we use `{{ contact }}`, it simply prints the variable. This serves as an intermediate debug step to ensure that the `contact` variable contains all the necessary information. This includes the user input, allowing us to pre-populate the form with existing values so the user doesn’t have to fill everything again. Additionally, it helps us identify any errors, enabling us to explain what’s wrong with the current input.' %}
+
+## Render the form again directly
+
+If the data is invalid, we want to render the form at `/contacts/create`.
+
+A way to display the form is to directly include the form code within the {% raw %}`{% else %}`{% endraw %} block in the `create.liquid` file. Here is how you can do that:
+
+#### app/views/pages/contacts/create.liquid
+
+
+{% raw %}
+```liquid
+---
+method: post
+---
+{% function contact = 'commands/contacts/create', object: context.params.contact %}
+{% if contact.valid %}
+	... 
+{% else %}
+<h2>Contact Us</h2>
+<form action="/contacts/create" method="post">
+<input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}">
+    <div>
+        <label for="email">Email</label>
+        <input type="text" name="contact[email]" id="email">
+    </div>
+    <div>
+      <textarea name="contact[body]"></textarea>
+    </div>
+    <input type="submit" value="Send">
+{% endif %}
+```
+{% endraw %}
+
+In this approach, even though the user is at `/contacts/create`, the form is still rendered directly within the same file.
+
+## Test the re-rendering
+
+Let’s test it! Navigate to your _Contact Us_ form and submit enter invalid data. The form should re-render at `/contacts/create`.
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/contact_us_rerender.gif' | asset_url }}" alt="Contact Us form re-rendering animation">
+
+## Display error messages
+
+To enhance the user experience, we also want to display error messages when the input is invalid.
+
+Add the following to your `app/views/pages/contacts/create.liquid` file:
+
+{% raw %}
+```liquid
+<label for="email">Email</label>
+      <input type="text" name="contact[email]" id="email">
+      {% if contact.errors.email != blank %}
+        <p>{{ contact.errors.email | join: ', ' }}</p>
+      {% endif %}
+```
+{% endraw %}
+
+{% raw %}
+The `{% if contact.errors.email != blank %}` block checks if there are any errors related to the email field.
+
+Since the errors are stored in an array, we use the `join` filter . The `&lt;p>{{ contact.errors.email | join: ', ' }}&lt;/p>` line displays these errors as a comma-separated list.
+{% endraw %}
+
+Similarly, for the message body field:
+
+{% raw %}
+```liquid
+   <textarea name="contact[body]">{{ contact.body }}</textarea>
+      {% if contact.errors.body != blank %}
+        <p>{{ contact.errors.body | join: ', ' }}</p>
+      {% endif %}
+```
+{% endraw %}
+
+{% raw %}
+The `{% if contact.errors.body != blank %}` block checks if there are any errors related to the message body.
+
+The `<p>{{ contact.errors.body | join: ', ' }}</p>` line displays these errors as a comma-separated list using the join filter.
+{% endraw %}
+
+Here’s how the updated `app/views/pages/contacts/create.liquid` should look:
+
+#### app/views/pages/contacts/create.liquid
+
+{% raw %}
+```liquid
+---
+method: post
+---
+{% function contact = 'commands/contacts/create', object: context.params.contact %}
+{% if contact.valid %}
+    ...
+{% else %}   
+{{ contact }}
+    <form action="/contacts/create" method="post">
+        <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}"</input>
+        <div>
+            <label for="email">Email</label>
+            <input type="text" name="contact[email]" id="email">
+            {% if contact.errors.email != blank %}
+            <p>{{ contact.errors.email | join: ', ' }}</p>
+            {% endif %}
+        </div>
+        <div>
+        <textarea name="contact[body]"></textarea>
+            {% if contact.errors.body != blank %}
+            <p>{{ contact.errors.body | join: ', ' }}</p>
+            {% endif %}
+        </div>
+        <input type="submit" value="Send">
+    </form>
+{% endif %}
+```
+{% endraw %}
+
+## Test error messages
+
+Navigate to your _Contact Us_ form and submit invalid data. The form should re-render and display the relevant error messages. This approach might not be visually appealing, but it effectively communicates the errors to the user.
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/contact_us_display_error.gif' | asset_url }}" alt="Displaying error messages on the Contact Us form">
+
+At this stage, there is some additional information displayed at the top, but it is not important for this step.
+
+## Prefill the form 
+
+Now, we want to pre-fill the form with the data that the user originally submitted. This way, if the form submission fails, the user doesn't have to re-enter all their data.
+
+Add the following code to the email field in your `app/views/pages/contacts/create.liquid` file:
+
+{% raw %}
+```liquid
+<input type="text" name="contact[email]" id="email" value="{{ contact.email }}">
+```
+{% endraw %}
+
+For the message body field, add the following code:
+
+
+{% raw %}
+```liquid
+<textarea name="contact[body]">{{ contact.body }}</textarea>
+```
+{% endraw %}
+
+Here's how the `app/views/pages/contacts/create.liquid` file should look with handling the pre-filled data:
+
+#### app/views/pages/contacts/create.liquid
+
+{% raw %}
+```liquid
+---
+method: post
+---
+{% function contact = 'commands/contacts/create', object: context.params.contact %}
+{% if contact.valid %}
+    ...
+{% else %}   
+{{ contact }}
+    <form action="/contacts/create" method="post">
+        <input type="hidden" name="authenticity_token" value="{{ context.authenticity_token }}"</input>
+        <div>
+            <label for="email">Email</label>
+            <input type="text" name="contact[email]" id="email" value="{{ contact.email }}">
+            {% if contact.errors.email != blank %}
+            <p>{{ contact.errors.email | join: ', ' }}</p>
+            {% endif %}
+        </div>
+        <div>
+        <textarea name="contact[body]">{{ contact.body }}</textarea>
+            {% if contact.errors.body != blank %}
+            <p>{{ contact.errors.body | join: ', ' }}</p>
+            {% endif %}
+        </div>
+        <input type="submit" value="Send">
+    </form>
+{% endif %}
+```
+{% endraw %}
+
+## Test prefill with submitted data
+
+Now, if you submit the form again with invalid data, the email and message fields should retain the information the user originally submitted.
+
+{% # TODO: check size %}
+<img loading="lazy" class="w-full" src="{{ 'images/get-started/contact-us-tutorial/contact_us_prefill.gif' | asset_url }}" alt="Contact Us form pre-filling with user data after submission with errors">
+
+{% render 'alert/next', content: 'Using Partials for Better Code Maintenance', url: '/get-started/contact-us-tutorial/using-partials' %}
